@@ -23,7 +23,7 @@ export function hasDef(id: string): boolean {
 }
 
 export function allCards(includeTokens = false): CardDef[] {
-  return ORDER.map((id) => REGISTRY[id]).filter((d) => includeTokens || !d.token);
+  return ORDER.map((id) => REGISTRY[id]).filter((d) => !d.system && (includeTokens || !d.token));
 }
 
 export function isExtraDeckCard(d: CardDef): boolean {

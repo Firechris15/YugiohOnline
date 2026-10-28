@@ -1,6 +1,23 @@
 import { registerCards, hasDef } from '../db';
 import { GENERIC_CARDS } from './generic';
 import { ARCHETYPE_CARDS } from './archetypes';
+import type { CardDef } from '../types';
+
+// Placeholders that bots substitute for hidden opponent cards when simulating.
+const hidden = (id: string, d: Partial<CardDef>): CardDef => ({
+  id,
+  name: { en: 'Unknown card', de: 'Unbekannte Karte' },
+  text: { en: '', de: '' },
+  rarity: 'common',
+  kind: 'monster',
+  system: true,
+  ...d,
+});
+export const SYSTEM_CARDS: CardDef[] = [
+  hidden('SYS-FDM', { kind: 'monster', frame: 'normal', attribute: 'EARTH', race: 'Warrior', level: 4, atk: 1200, def: 1500 }),
+  hidden('SYS-FDS', { kind: 'trap', trapType: 'normal', effects: [] }),
+  hidden('SYS-HND', { kind: 'monster', frame: 'normal', attribute: 'EARTH', race: 'Warrior', level: 4, atk: 1500, def: 1000 }),
+];
 
 let registered = false;
 
@@ -10,7 +27,7 @@ export function ensureCardsRegistered(): void {
     registered = true;
     return;
   }
-  registerCards([...GENERIC_CARDS, ...ARCHETYPE_CARDS]);
+  registerCards([...GENERIC_CARDS, ...ARCHETYPE_CARDS, ...SYSTEM_CARDS]);
   registered = true;
 }
 

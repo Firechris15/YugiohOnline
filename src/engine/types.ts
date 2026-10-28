@@ -237,6 +237,7 @@ export interface CardDef {
   materials?: FusionMaterial[];
   limit?: 0 | 1 | 2 | 3;
   token?: boolean;
+  system?: boolean; // internal placeholder (used by bots), never shown
   art?: { seed?: number; hue?: number; motif?: string };
 }
 

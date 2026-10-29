@@ -6,7 +6,7 @@ import { getDef, hasDef } from '../../engine';
 import { cardArtUrl } from '../art/generate';
 import { useT } from '../i18n';
 import { frameColor } from '../lib/cards';
-import { realImage } from '../lib/carddb';
+import { realImage, reportImage } from '../lib/carddb';
 import { AttributeGlyph, Icon, SubtypeGlyph } from './Icons';
 import '../styles/card.css';
 
@@ -123,7 +123,19 @@ function CardFaceImpl({ defId, size = 'md', faceDown, atk, def, holo, className 
       >
         <div className="card-tilt">
           <div className="card-frame">
-            <img className="card-img" src={img} alt={d.name[t.lang]} draggable={false} loading="lazy" decoding="async" onError={() => setFailed(defId)} />
+            <img
+              className="card-img"
+              src={img}
+              alt={d.name[t.lang]}
+              draggable={false}
+              loading="lazy"
+              decoding="async"
+              onLoad={() => reportImage(true)}
+              onError={() => {
+                reportImage(false);
+                setFailed(defId);
+              }}
+            />
             {showStats && (
               <div className="card-real-stats">
                 <span className={`card-stat atk ${atkDelta > 0 ? 'up' : atkDelta < 0 ? 'down' : ''}`}>{fmtStat(shownAtk)}</span>

@@ -454,6 +454,10 @@ const D: Dict = {
   'carddb.loading': { de: 'Lade die Yu-Gi-Oh!-Kartendatenbank…', en: 'Loading the Yu-Gi-Oh! card database…' },
   'carddb.error': { de: 'Die Kartendatenbank ist gerade nicht erreichbar – es werden die DuelForge-Demo-Karten angezeigt.', en: 'The card database is unavailable right now – showing the DuelForge demo cards.' },
   'carddb.retry': { de: 'Erneut versuchen', en: 'Retry' },
+  'carddb.imagesBlocked': {
+    de: 'Die Kartenbilder werden hier blockiert (zum Beispiel in der Claude-Vorschau, die keine Bilder von anderen Webseiten lädt). Auf einer normalen Webadresse oder lokal erscheinen sie – bis dahin siehst du gezeichnete Karten.',
+    en: 'Card images are blocked here (for example in the Claude preview, which does not load images from other sites). They appear on a regular web address or when running locally – until then you see drawn cards.',
+  },
   'carddb.credit': { de: 'Kartendaten: YGOPRODeck / EDOPro-Datenbank. Yu-Gi-Oh! ist eine Marke von Konami – dies ist ein inoffizielles Fanprojekt.', en: 'Card data: YGOPRODeck / EDOPro database. Yu-Gi-Oh! is a trademark of Konami – this is an unofficial fan project.' },
   'format.label': { de: 'Format', en: 'Format' },
   'format.demo': { de: 'Demo', en: 'Demo' },

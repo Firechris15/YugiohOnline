@@ -138,3 +138,17 @@ export function realImage(defId: string, size: ImageSize): string | null {
   if (!d.real || !d.passcode) return null;
   return cardImageUrl(d.passcode, size, IS_STATIC ? null : apiUrl(''));
 }
+
+// ------------------------------------------------------------ image health
+
+/** Whether real card images load here (some embeds block images from other sites). */
+export const useImageHealth = create<{ blocked: boolean }>(() => ({ blocked: false }));
+let imagesOk = 0;
+let imagesFailed = 0;
+
+export function reportImage(ok: boolean): void {
+  if (ok) imagesOk++;
+  else imagesFailed++;
+  const blocked = imagesOk === 0 && imagesFailed >= 4;
+  if (blocked !== useImageHealth.getState().blocked) useImageHealth.setState({ blocked });
+}

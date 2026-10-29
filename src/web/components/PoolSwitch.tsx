@@ -2,7 +2,7 @@
 // plus the loading / error notice for the real card database.
 import { useT } from '../i18n';
 import { useSettings } from '../store/settings';
-import { loadCardDb, useCardDb, useCardPool } from '../lib/carddb';
+import { loadCardDb, useCardDb, useCardPool, useImageHealth } from '../lib/carddb';
 
 export function PoolSwitch() {
   const t = useT();
@@ -23,6 +23,14 @@ export function CardDbNotice() {
   const t = useT();
   const { wanted, status } = useCardPool();
   const error = useCardDb((s) => s.error);
+  const imagesBlocked = useImageHealth((s) => s.blocked);
+  if (wanted === 'real' && status === 'ready' && imagesBlocked) {
+    return (
+      <div className="panel panel-pad carddb-notice">
+        <span>🖼 {t('carddb.imagesBlocked')}</span>
+      </div>
+    );
+  }
   if (wanted !== 'real' || status === 'ready') return null;
   if (status === 'error')
     return (

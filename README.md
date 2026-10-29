@@ -63,7 +63,8 @@ docker run -p 8787:8787 -v duelforge-data:/app/data duelforge
 ## Hosting
 
 - **Komplett (mit Online-Duellen):** auf jedem Node-Host mit WebSocket-Unterstützung, z. B. Render, Railway, Fly.io oder einem eigenen VPS (Docker-Image oder `npm run build && npm start`).
-- **Nur statisch (ohne Server):** `npm run cards && npm run build:static` erzeugt `dist-static/` inklusive gepackter Kartendatenbank. Bibliothek, Deck-Builder, Bot-Duelle, Solo-Testmodus und Bot-Liga-Meta funktionieren dann, Online-Duelle nicht. Kartenbilder kommen dabei direkt von YGOPRODeck.
+- **GitHub Pages (kostenlos, ohne Server):** Der Workflow `.github/workflows/pages.yml` baut die statische Version bei jedem Push auf `main` und veröffentlicht sie. Einmalig in GitHub unter *Settings → Pages → Source* „GitHub Actions“ wählen; die Seite liegt dann unter `https://<name>.github.io/<repo>/`.
+- **Nur statisch (ohne Server):** `npm run cards && npm run build:static` erzeugt `dist-static/` inklusive Kartendatenbank. Bibliothek, Deck-Builder, Bot-Duelle, Solo-Testmodus und Bot-Liga-Meta funktionieren dann, Online-Duelle nicht. Kartenbilder kommen dabei direkt von YGOPRODeck.
 - **Getrennter Server:** Liegt der Server auf einer anderen Domain, beim Build `VITE_SERVER_URL=https://dein-server.example` setzen.
 
 ## Nützliche Befehle

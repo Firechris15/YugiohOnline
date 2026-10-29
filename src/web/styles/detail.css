@@ -37,6 +37,11 @@
   border-color: rgba(255, 77, 109, 0.35);
 }
 
+.tag-good {
+  color: #8dffc4;
+  border-color: rgba(54, 211, 141, 0.35);
+}
+
 .rarity-tag.r-rare {
   color: #d5ddff;
 }
@@ -70,6 +75,8 @@
 }
 
 .card-text.compact .card-text-body {
+  max-height: 34vh;
+  overflow-y: auto;
   font-size: 13px;
   padding: 9px 11px;
 }

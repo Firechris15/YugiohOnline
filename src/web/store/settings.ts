@@ -12,6 +12,8 @@ interface SettingsState {
   speed: AnimSpeed;
   smartPass: boolean;
   clientId: string;
+  /** real Yu-Gi-Oh! cards or the DuelForge demo set */
+  pool: 'real' | 'demo';
   set: (patch: Partial<Omit<SettingsState, 'set'>>) => void;
 }
 
@@ -33,6 +35,7 @@ export const useSettings = create<SettingsState>()(
       speed: 'normal',
       smartPass: true,
       clientId: newClientId(),
+      pool: 'real',
       set: (patch) => set(patch),
     }),
     { name: 'duelforge.settings' },

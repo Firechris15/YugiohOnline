@@ -11,6 +11,23 @@ import { getAtk, getDefense, getAbilities } from '../stats';
 import { canFuse } from '../ops';
 import { opp, fieldMonsters } from '../core';
 import { mulberry, type Rand } from '../testkit';
+import { EXODIA_PIECES } from '../real/effects';
+
+const EXODIA = new Set(EXODIA_PIECES);
+
+/** Distinct pieces of a hand-win set (Exodia) in a player's hand. */
+function handWinPieces(g: GameState, p: PlayerId): number {
+  let seen = 0;
+  const names = new Set<string>();
+  for (const uid of g.players[p].hand) {
+    const d = getDef(g.cards[uid].defId);
+    if (d.real && EXODIA.has(d.name.en) && !names.has(d.name.en)) {
+      names.add(d.name.en);
+      seen++;
+    }
+  }
+  return seen;
+}
 
 export type BotLevel = 'easy' | 'normal' | 'hard';
 
@@ -72,6 +89,11 @@ export function evaluate(g: GameState, me: PlayerId, threatWeight = 0.45): numbe
       v += c.faceUp ? 420 : 520;
     }
     v += ps.hand.length * 430;
+    if (p === me) {
+      // collecting Exodia: keep the pieces in hand and value every new one highly
+      const pieces = handWinPieces(g, p);
+      v += pieces * pieces * 380;
+    }
     v += Math.min(ps.gy.length, 12) * 15;
     if (ps.deck.length < 6) v -= (6 - ps.deck.length) * 250;
     return v;

@@ -13,6 +13,19 @@ interface Section {
 
 const SECTIONS: Section[] = [
   {
+    title: { de: 'Zwei Spielmodi', en: 'Two game modes' },
+    body: {
+      de: [
+        '**Automatisches Duell:** Die Website führt alle Regeln, Ketten und Effekte selbst aus – ideal gegen Bots. Dafür brauchst du Karten mit automatischen Regeln (Format „Automatisch“, rund 850 klassische Karten wie Topf der Gier, Spiegelkraft oder Dunkler Magier).',
+        '**Freies Duell:** Wie am echten Tisch (oder auf Dueling Book): Alle 14.000+ Karten sind spielbar. Ihr bewegt Karten per Drag & Drop oder Menü, ändert Lebenspunkte selbst und führt Effekte selbst aus. Dafür gibt es Münze, Würfel, Spielmarken, Zählmarken, Chat und das Duell-Protokoll. Gespielt wird mit TCG-, OCG- oder ohne Banlist.',
+      ],
+      en: [
+        '**Automatic duel:** the site resolves every rule, chain and effect for you – perfect against bots. It needs cards with automated rules (the “Automatic” format, around 850 classic cards such as Pot of Greed, Mirror Force or Dark Magician).',
+        '**Free duel:** just like at a real table (or on Dueling Book): all 14,000+ cards are playable. You move cards by drag & drop or menu, change Life Points and resolve effects yourselves – with a coin, a die, tokens, counters, chat and the duel log. Play with the TCG or OCG banlist or without one.',
+      ],
+    },
+  },
+  {
     title: { de: 'Ziel des Duells', en: 'Goal of the duel' },
     body: {
       de: [

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ARCHETYPE_BY_ID } from '../../engine';
+import { archetypeInfo } from '../lib/cards';
 import { useT } from '../i18n';
 import { useSettings, type AnimSpeed } from '../store/settings';
 import { useHistory } from '../store/history';
@@ -92,7 +92,7 @@ export default function ProfilePage() {
                 {t('profile.vsBot', { name: m.opponent })}
                 <small className="faint">
                   {m.mode === 'online' ? t('profile.online') : t('profile.botMode')} · {m.myDeck}
-                  {ARCHETYPE_BY_ID[m.myArchetype] ? ` (${ARCHETYPE_BY_ID[m.myArchetype].name[t.lang]})` : ''}
+                  {m.myArchetype && m.myArchetype !== 'mixed' ? ` (${archetypeInfo(m.myArchetype, t.lang).name})` : ''}
                 </small>
               </span>
               <span className="faint small mono">{t('duel.stats', { turns: m.turns, lp: m.lp })}</span>

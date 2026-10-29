@@ -39,6 +39,16 @@ export const AttributeGlyph = ({ attr, size = 16 }: { attr: string; size?: numbe
       );
     case 'DARK':
       return svg(s, <path d="M15 3a9 9 0 1 0 6 13A7 7 0 0 1 15 3z" fill="currentColor" stroke="none" />, {});
+    case 'DIVINE':
+      return svg(
+        s,
+        <>
+          <path d="M12 3 22 20H2z" />
+          <ellipse cx="12" cy="14" rx="4" ry="2.4" />
+          <circle cx="12" cy="14" r="1.3" fill="currentColor" stroke="none" />
+        </>,
+        {},
+      );
     case 'SPELL':
       return svg(
         s,

@@ -1,7 +1,8 @@
 // WebSocket client for online duels (singleton zustand store).
 import { create } from 'zustand';
-import type { Action, DeckList, GameView } from '../../engine';
-import type { ClientMsg, PublicRoom, RoomInfo, ServerMsg } from '../../shared/protocol';
+import type { Action, DeckList, FreeBanlist, GameView } from '../../engine';
+import type { SbAction, SbView } from '../../engine/sandbox';
+import type { ClientMsg, DuelMode, PublicRoom, RoomInfo, ServerMsg } from '../../shared/protocol';
 import { useSettings, playerName } from '../store/settings';
 import { IS_STATIC } from '../config';
 
@@ -18,6 +19,7 @@ interface NetState {
   room: RoomInfo | null;
   view: GameView | null;
   views: GameView[]; // queued views (consumed by the duel presenter)
+  sbView: SbView | null; // latest free-duel view
   queued: boolean;
   chat: ChatLine[];
   emotes: { from: 0 | 1; id: string; at: number }[];
@@ -26,12 +28,12 @@ interface NetState {
   closedReason: string | null;
   connect: () => Promise<void>;
   send: (msg: ClientMsg) => void;
-  createRoom: (deck: DeckList, deckName: string, isPublic: boolean) => Promise<void>;
+  createRoom: (deck: DeckList, deckName: string, isPublic: boolean, mode?: DuelMode, banlist?: FreeBanlist) => Promise<void>;
   joinRoom: (code: string, deck: DeckList, deckName: string) => Promise<void>;
-  quickMatch: (deck: DeckList, deckName: string) => Promise<void>;
+  quickMatch: (deck: DeckList, deckName: string, mode?: DuelMode, banlist?: FreeBanlist) => Promise<void>;
   cancelQueue: () => void;
   leaveRoom: () => void;
-  act: (a: Action) => void;
+  act: (a: Action | SbAction) => void;
   takeViews: () => GameView[];
   reset: () => void;
 }
@@ -59,6 +61,7 @@ export const useNet = create<NetState>()((set, get) => ({
   room: null,
   view: null,
   views: [],
+  sbView: null,
   queued: false,
   chat: [],
   emotes: [],
@@ -127,20 +130,20 @@ export const useNet = create<NetState>()((set, get) => ({
     if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
   },
 
-  createRoom: async (deck, deckName, isPublic) => {
+  createRoom: async (deck, deckName, isPublic, mode = 'auto', banlist) => {
     await get().connect();
-    set({ chat: [], view: null, views: [], closedReason: null });
-    get().send({ t: 'createRoom', deck, deckName, isPublic });
+    set({ chat: [], view: null, views: [], sbView: null, closedReason: null });
+    get().send({ t: 'createRoom', deck, deckName, isPublic, mode, banlist });
   },
   joinRoom: async (code, deck, deckName) => {
     await get().connect();
-    set({ chat: [], view: null, views: [], closedReason: null });
+    set({ chat: [], view: null, views: [], sbView: null, closedReason: null });
     get().send({ t: 'joinRoom', code: code.trim().toUpperCase(), deck, deckName });
   },
-  quickMatch: async (deck, deckName) => {
+  quickMatch: async (deck, deckName, mode = 'auto', banlist) => {
     await get().connect();
-    set({ chat: [], view: null, views: [], closedReason: null, queued: true });
-    get().send({ t: 'quickMatch', deck, deckName });
+    set({ chat: [], view: null, views: [], sbView: null, closedReason: null, queued: true });
+    get().send({ t: 'quickMatch', deck, deckName, mode, banlist });
   },
   cancelQueue: () => {
     get().send({ t: 'cancelQueue' });
@@ -148,7 +151,7 @@ export const useNet = create<NetState>()((set, get) => ({
   },
   leaveRoom: () => {
     get().send({ t: 'leaveRoom' });
-    set({ room: null, view: null, views: [], chat: [], queued: false });
+    set({ room: null, view: null, views: [], sbView: null, chat: [], queued: false });
   },
   act: (a) => get().send({ t: 'action', action: a }),
   takeViews: () => {
@@ -156,7 +159,7 @@ export const useNet = create<NetState>()((set, get) => ({
     if (v.length) set({ views: [] });
     return v;
   },
-  reset: () => set({ room: null, view: null, views: [], chat: [], queued: false, lastError: null, closedReason: null }),
+  reset: () => set({ room: null, view: null, views: [], sbView: null, chat: [], queued: false, lastError: null, closedReason: null }),
 }));
 
 function handle(msg: ServerMsg) {
@@ -178,7 +181,8 @@ function handle(msg: ServerMsg) {
       useNet.setState({ queued: true });
       break;
     case 'state':
-      useNet.setState({ view: msg.view, views: [...s.views, msg.view] });
+      if (msg.view.mode === 'free') useNet.setState({ sbView: msg.view });
+      else useNet.setState({ view: msg.view, views: [...s.views, msg.view] });
       break;
     case 'chat':
       useNet.setState({ chat: [...s.chat.slice(-80), { from: msg.from, name: msg.name, text: msg.text, at: msg.at }] });

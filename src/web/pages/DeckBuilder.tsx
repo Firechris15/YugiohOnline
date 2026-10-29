@@ -1,9 +1,14 @@
 import { useMemo, useState, type DragEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { getDef, isExtraDeckCard, sortDeckIds, validateDeck, encodeDeck, DECK_RULES } from '../../engine';
+import { cardLimit, getDef, hasDef, isExtraDeckCard, sortDeckIds, validateDeck, encodeDeck, DECK_RULES, type DeckFormat } from '../../engine';
+import { toYdk } from '../../shared/ygo';
 import { useT } from '../i18n';
-import { useDecks } from '../store/decks';
+import { useDecks, deckFormat, deckPoolOf } from '../store/decks';
+import { useCardDb } from '../lib/carddb';
+import { CardDbNotice } from '../components/PoolSwitch';
+import { VirtualGrid } from '../components/VirtualGrid';
+import { YdkImport } from './Decks';
 import { askConfirm, toast } from '../store/ui';
 import { Card } from '../components/Card';
 import { CardText, CardModal } from '../components/CardDetail';
@@ -11,7 +16,7 @@ import { CardFilterBar, DEFAULT_FILTERS, useFilteredCards, type FilterState } fr
 import { BarList, ColumnChart, StackedBar } from '../components/Charts';
 import { AttributeGlyph, Icon } from '../components/Icons';
 import { Modal } from '../components/Layout';
-import { ATTR_COLORS } from '../lib/cards';
+import { ATTR_COLORS, REAL_ATTR_COLORS } from '../lib/cards';
 import { copyText } from './Decks';
 import { sfx } from '../lib/sound';
 import '../styles/decks.css';
@@ -28,14 +33,39 @@ export function openingOdds(deckSize: number, copies: number, hand = 5): number 
   return 1 - choose(deckSize - copies, hand) / choose(deckSize, hand);
 }
 
+const REAL_FORMATS: DeckFormat[] = ['auto', 'tcg', 'ocg', 'none'];
+
 export default function DeckBuilderPage() {
+  const t = useT();
+  const { id } = useParams();
+  const deck = useDecks((s) => s.decks.find((d) => d.id === id));
+  const dbStatus = useCardDb((s) => s.status);
+  if (deck && deckPoolOf(deck) === 'real' && dbStatus !== 'ready') {
+    return (
+      <div className="page page-narrow" style={{ paddingTop: 40 }}>
+        <CardDbNotice />
+        {dbStatus === 'error' && (
+          <Link to="/decks" className="btn">
+            {t('builder.back')}
+          </Link>
+        )}
+      </div>
+    );
+  }
+  return <DeckBuilder key={id} />;
+}
+
+function DeckBuilder() {
   const t = useT();
   const { id } = useParams();
   const nav = useNavigate();
   const deck = useDecks((s) => s.decks.find((d) => d.id === id));
   const update = useDecks((s) => s.update);
-  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
-  const pool = useFilteredCards(filters, t.lang);
+  const cardPool = deck ? deckPoolOf(deck) : 'demo';
+  const format = deck ? deckFormat(deck) : 'demo';
+  const [filters, setFilters] = useState<FilterState>({ ...DEFAULT_FILTERS, autoOnly: format === 'auto' });
+  const pool = useFilteredCards(filters, t.lang, cardPool);
+  const [ydkOpen, setYdkOpen] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<'main' | 'extra' | null>(null);
@@ -62,9 +92,9 @@ export default function DeckBuilderPage() {
   const add = (defId: string) => {
     const d = getDef(defId);
     const n = counts[defId] ?? 0;
-    const limit = d.limit ?? DECK_RULES.copies;
+    const limit = cardLimit(d, format);
     if (n >= limit) {
-      toast(t('deck.tooManyCopies', { card: d.name[t.lang], n: n + 1, limit }), 'error');
+      toast(t(limit === 0 ? 'deck.banned' : 'deck.tooManyCopies', { card: d.name[t.lang], n: n + 1, limit }), 'error');
       return;
     }
     if (isExtraDeckCard(d)) {
@@ -91,7 +121,8 @@ export default function DeckBuilderPage() {
     if (defId) add(defId);
   };
 
-  const issues = validateDeck(deck);
+  const issues = validateDeck(deck, format);
+  const attrColors = cardPool === 'real' ? REAL_ATTR_COLORS : ATTR_COLORS;
   const mainSorted = sortDeckIds(deck.main);
   const extraSorted = sortDeckIds(deck.extra);
   const monsters = deck.main.filter((x) => getDef(x).kind === 'monster');
@@ -102,11 +133,11 @@ export default function DeckBuilderPage() {
     value: monsters.filter((x) => (lv === 8 ? (getDef(x).level ?? 0) >= 8 : getDef(x).level === lv)).length,
     hint: `${t('card.level')} ${lv === 8 ? '8+' : lv}`,
   }));
-  const attrs = Object.keys(ATTR_COLORS).map((a) => ({
+  const attrs = Object.keys(attrColors).map((a) => ({
     key: t(`attr.${a}`),
     label: (
       <>
-        <span style={{ color: ATTR_COLORS[a], display: 'inline-flex' }}>
+        <span style={{ color: attrColors[a], display: 'inline-flex' }}>
           <AttributeGlyph attr={a} size={13} />
         </span>
         {t(`attr.${a}`)}
@@ -132,11 +163,7 @@ export default function DeckBuilderPage() {
   const issueText = (i: (typeof issues)[number]) => {
     const p = { ...i.params } as Record<string, string | number>;
     if (p.id && typeof p.id === 'string') {
-      try {
-        p.card = getDef(p.id).name[t.lang];
-      } catch {
-        p.card = p.id;
-      }
+      p.card = hasDef(p.id) ? getDef(p.id).name[t.lang] : p.id;
     }
     return t(i.key, p);
   };
@@ -152,17 +179,24 @@ export default function DeckBuilderPage() {
       </div>
       <div className="builder">
         <aside className="builder-pool panel">
-          <CardFilterBar value={filters} onChange={setFilters} compact />
+          <CardFilterBar value={filters} onChange={setFilters} compact pool={cardPool} />
           <div className="builder-preview">
             {hover ? <CardText defId={hover} compact /> : <p className="faint small" style={{ margin: 0 }}>{t('builder.hint')}</p>}
           </div>
-          <div className="builder-pool-grid">
-            {pool.map((c) => {
+          <VirtualGrid
+            className="builder-pool-grid"
+            scroller="self"
+            items={pool}
+            getKey={(c) => c.id}
+            minItemWidth={84}
+            gap={10}
+            rowHeight={() => Math.ceil((84 * 86) / 59) + 2}
+            renderItem={(c) => {
               const n = counts[c.id] ?? 0;
-              const maxed = n >= (c.limit ?? DECK_RULES.copies);
+              const limit = cardLimit(c, format);
+              const maxed = n >= limit;
               return (
                 <button
-                  key={c.id}
                   className={`pool-card ${maxed ? 'maxed' : ''}`}
                   draggable
                   onDragStart={(e) => {
@@ -177,21 +211,41 @@ export default function DeckBuilderPage() {
                   onMouseEnter={() => setHover(c.id)}
                   title={c.name[t.lang]}
                 >
-                  <Card defId={c.id} size="sm" />
+                  <Card defId={c.id} size="sm" limit={c.real && limit < 3 ? limit : undefined} />
                   {n > 0 && (
                     <span className="pool-card-count">
-                      {n}/{c.limit ?? DECK_RULES.copies}
+                      {n}/{limit}
                     </span>
                   )}
                 </button>
               );
-            })}
-          </div>
+            }}
+          />
         </aside>
 
         <section className="builder-main">
           <div className="builder-head panel">
             <input className="builder-name" value={deck.name} onChange={(e) => update(deck.id, { name: e.target.value.slice(0, 40) })} aria-label={t('builder.name')} />
+            {cardPool === 'real' && (
+              <div className="builder-format">
+                <span className="small muted">{t('format.label')}</span>
+                <div className="seg">
+                  {REAL_FORMATS.map((f) => (
+                    <button
+                      key={f}
+                      className={`seg-btn ${format === f ? 'active' : ''}`}
+                      onClick={() => {
+                        update(deck.id, { format: f });
+                        setFilters((cur) => ({ ...cur, autoOnly: f === 'auto' }));
+                      }}
+                    >
+                      {t(`format.${f}`)}
+                    </button>
+                  ))}
+                </div>
+                <span className="faint tiny">{t(format === 'auto' ? 'format.auto.d' : 'format.free.d')}</span>
+              </div>
+            )}
             <div className="row row-wrap">
               <button className="btn btn-sm" onClick={drawHand} disabled={deck.main.length < 5}>
                 <Icon.Cards size={16} /> {t('builder.testHand')}
@@ -207,6 +261,27 @@ export default function DeckBuilderPage() {
               >
                 <Icon.Copy /> {t('decks.export')}
               </button>
+              {cardPool === 'real' && (
+                <>
+                  <button className="btn btn-sm" onClick={() => setYdkOpen(true)}>
+                    {t('builder.importYdk')}
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    onClick={() => {
+                      const ids = (xs: string[]) => xs.map((x) => getDef(x).passcode ?? Number(x));
+                      const blob = new Blob([toYdk(ids(deck.main), ids(deck.extra))], { type: 'text/plain' });
+                      const a = document.createElement('a');
+                      a.href = URL.createObjectURL(blob);
+                      a.download = `${deck.name.replace(/[^\w\- ]+/g, '').trim() || 'deck'}.ydk`;
+                      a.click();
+                      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+                    }}
+                  >
+                    {t('builder.exportYdk')}
+                  </button>
+                </>
+              )}
               <button
                 className="btn btn-sm btn-danger"
                 onClick={() => {
@@ -374,6 +449,16 @@ export default function DeckBuilderPage() {
         </div>
       </Modal>
       <CardModal defId={detail} onClose={() => setDetail(null)} onSelect={setDetail} />
+      <YdkImport
+        open={ydkOpen}
+        onClose={() => setYdkOpen(false)}
+        onImport={(list, skipped) => {
+          setYdkOpen(false);
+          update(deck.id, { main: list.main, extra: list.extra });
+          toast(t('builder.ydkImported', { n: list.main.length + list.extra.length }), 'success');
+          if (skipped) toast(t('builder.ydkSkipped', { n: skipped }), 'info');
+        }}
+      />
     </div>
   );
 }

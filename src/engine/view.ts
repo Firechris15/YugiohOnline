@@ -46,6 +46,7 @@ export interface ChainLinkView {
 }
 
 export interface GameView {
+  mode: 'auto';
   you: PlayerId;
   turn: number;
   turnPlayer: PlayerId;
@@ -142,6 +143,7 @@ export function getView(g: GameState, viewer: PlayerId, sinceSeq = 0): GameView 
   }
   const pend = g.pending;
   return {
+    mode: 'auto',
     you: viewer,
     turn: g.turn,
     turnPlayer: g.turnPlayer,

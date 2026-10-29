@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { ConfirmHost, Footer, Navbar, PageTransition, Toasts } from './components/Layout';
 import { useSettings } from './store/settings';
 import { HomePage } from './pages/Home';
+import { loadCardDb } from './lib/carddb';
 
 const LibraryPage = lazy(() => import('./pages/Library'));
 const DecksPage = lazy(() => import('./pages/Decks'));
@@ -31,6 +32,12 @@ export function App() {
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
+
+  useEffect(() => {
+    // after the first paint: parsing ~14,000 cards takes a moment
+    const id = setTimeout(() => void loadCardDb(), 50);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     if (!loc.hash) window.scrollTo({ top: 0 });

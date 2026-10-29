@@ -12,4 +12,7 @@ export { matchDef } from './filters';
 export { ARCHETYPES, ARCHETYPE_BY_ID } from './cards';
 export type { ArchetypeInfo } from './cards';
 export * from './decks';
+export { REAL_STARTERS, REAL_STARTER_BY_ID, resolveRealStarter, realStarterCover, detectRealArchetype } from './real/decks';
+export type { RealStarter } from './real/decks';
+export { registerRealCards, realCardById, realCardByName, realId, realCardsRegistered } from './real';
 export { randomSeed } from './rng';

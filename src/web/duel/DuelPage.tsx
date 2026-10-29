@@ -2,7 +2,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { STARTER_DECKS, detectArchetype, type GameView, type PlayerId } from '../../engine';
+import { REAL_STARTERS, STARTER_DECKS, deckPool, detectArchetype, resolveRealStarter, type GameView, type PlayerId } from '../../engine';
+import type { SbView } from '../../engine/sandbox';
 import { botName, type BotLevel } from '../../engine/ai/bot';
 import { useT } from '../i18n';
 import { useDecks, findDeckChoice } from '../store/decks';
@@ -11,13 +12,18 @@ import { useHistory } from '../store/history';
 import { useNet } from '../lib/net';
 import { toast } from '../store/ui';
 import { LocalDuel } from './LocalDuel';
+import { LocalSandbox } from './LocalSandbox';
 import { DuelBoard, type DuelSource } from './DuelBoard';
+import { FreeBoard, type FreeSource } from './FreeBoard';
+import { useCardDb } from '../lib/carddb';
 import { Icon } from '../components/Icons';
 import { copyText } from '../pages/Decks';
 import { EMOTES } from '../../shared/protocol';
 import { Logo } from '../components/Layout';
 
-function useRecordResult(view: GameView | null, info: { mode: 'bot' | 'online'; opponent: string; myDeck: string; level?: string; myArchetype: string }) {
+type ResultView = Pick<GameView, 'winner' | 'turn' | 'eventSeq' | 'you'> & { players: { lp: number }[] };
+
+function useRecordResult(view: ResultView | null, info: { mode: 'bot' | 'online'; opponent: string; myDeck: string; level?: string; myArchetype: string }) {
   const add = useHistory((s) => s.add);
   const done = useRef<string | null>(null);
   useEffect(() => {
@@ -51,9 +57,17 @@ function BotDuel() {
   const duelRef = useRef<LocalDuel | null>(null);
 
   const duel = useMemo(() => {
-    const pool = botArch === 'random' ? STARTER_DECKS : STARTER_DECKS.filter((s) => s.archetype === botArch);
-    const bd = pool[Math.floor(Math.random() * pool.length)] ?? STARTER_DECKS[0];
-    return new LocalDuel(mine.list, bd.deck, level, [playerName(), `${botName(level, t.lang)}`]);
+    let botList = STARTER_DECKS[0].deck;
+    if (deckPool(mine.list) === 'real') {
+      const real = REAL_STARTERS.map((s) => ({ id: s.id, list: resolveRealStarter(s) })).filter((x) => x.list);
+      const pool = botArch === 'random' ? real : real.filter((s) => s.id === botArch);
+      const pick = pool[Math.floor(Math.random() * pool.length)] ?? real[0];
+      if (pick?.list) botList = pick.list;
+    } else {
+      const pool = botArch === 'random' ? STARTER_DECKS : STARTER_DECKS.filter((s) => s.archetype === botArch);
+      botList = (pool[Math.floor(Math.random() * pool.length)] ?? STARTER_DECKS[0]).deck;
+    }
+    return new LocalDuel(mine.list, botList, level, [playerName(), `${botName(level, t.lang)}`]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [round]);
 
@@ -87,6 +101,56 @@ function BotDuel() {
     [nav, t],
   );
   return <DuelBoard key={round} incoming={views} source={source} />;
+}
+
+function SoloDuel() {
+  const t = useT();
+  const nav = useNavigate();
+  const [params] = useSearchParams();
+  const decks = useDecks((s) => s.decks);
+  const mine = findDeckChoice(params.get('deck'), decks, t.lang);
+  const [round, setRound] = useState(0);
+  const [view, setView] = useState<SbView | null>(null);
+  const ref = useRef<LocalSandbox | null>(null);
+
+  useEffect(() => {
+    if (!mine) return;
+    const sb = new LocalSandbox(mine.list, [playerName(), t('free.soloOpp')]);
+    ref.current = sb;
+    const off = sb.subscribe(setView);
+    return () => {
+      off();
+      sb.dispose();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [round]);
+
+  const source: FreeSource = useMemo(
+    () => ({
+      mode: 'solo',
+      act: (a) => {
+        const err = ref.current?.act(a);
+        if (err) toast(t('common.error', { msg: err }), 'error');
+      },
+      leave: () => nav('/play?mode=free'),
+      rematch: () => setRound((r) => r + 1),
+    }),
+    [nav, t],
+  );
+  if (!mine) {
+    return (
+      <div className="waiting-room">
+        <div className="panel waiting-card">
+          <h2>{t('play.deckIllegal')}</h2>
+          <button className="btn" onClick={() => nav('/play?mode=free')}>
+            {t('duel.backToLobby')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+  if (!view) return <div className="duel-loading"><div className="spinner" /></div>;
+  return <FreeBoard key={round} view={view} source={source} />;
 }
 
 function WaitingRoom({ code, onLeave }: { code: string; onLeave: () => void }) {
@@ -183,6 +247,7 @@ function ChatBox() {
 
 function OnlineDuel({ code }: { code: string }) {
   const t = useT();
+  useCardDb((s) => s.status); // re-render once real cards are loaded
   const nav = useNavigate();
   const net = useNet();
   const views = useNet((s) => s.views);
@@ -273,6 +338,8 @@ function OnlineDuel({ code }: { code: string }) {
     );
   }
   if (room.status === 'waiting') return <WaitingRoom code={room.code} onLeave={source.leave} />;
+  if (room.pool === 'real' && useCardDb.getState().status !== 'ready') return <div className="duel-loading"><div className="spinner" /></div>;
+  if (room.mode === 'free') return <OnlineFree source={source} />;
   return (
     <>
       {oppInfo && !oppInfo.connected && room.status === 'playing' && <div className="disconnect-note">{t('duel.disconnected')}</div>}
@@ -281,8 +348,54 @@ function OnlineDuel({ code }: { code: string }) {
   );
 }
 
+function OnlineFree({ source }: { source: DuelSource }) {
+  const t = useT();
+  const view = useNet((s) => s.sbView);
+  const room = useNet((s) => s.room);
+  const decks = useDecks((s) => s.decks);
+  const me: PlayerId = room?.you ?? 0;
+  const oppInfo = room?.players[me === 0 ? 1 : 0];
+  const info = useMemo(
+    () => ({ mode: 'online' as const, opponent: oppInfo?.name ?? '?', myDeck: room?.players[me]?.deckName ?? '', myArchetype: detectArchetype(findDeckChoice(useDecks.getState().lastUsed, decks, t.lang)?.list ?? { main: [], extra: [] }) }),
+    [oppInfo?.name, room, me, decks, t.lang],
+  );
+  useRecordResult(view, info);
+  const free: FreeSource = useMemo(
+    () => ({
+      mode: 'online',
+      act: (a) => useNet.getState().act(a),
+      leave: source.leave,
+      rematch: source.rematch,
+      rematchState: source.rematchState,
+      connected: source.connected as [boolean, boolean] | undefined,
+      chat: source.chat,
+    }),
+    [source],
+  );
+  if (!view) return <div className="duel-loading"><div className="spinner" /></div>;
+  return (
+    <>
+      {oppInfo && !oppInfo.connected && room?.status === 'playing' && <div className="disconnect-note">{t('duel.disconnected')}</div>}
+      <FreeBoard view={view} source={free} />
+    </>
+  );
+}
+
 export default function DuelPage() {
   const { mode, code } = useParams();
+  const [params] = useSearchParams();
+  const dbStatus = useCardDb((s) => s.status);
+  const deckParam = params.get('deck') ?? '';
+  // Real-card duels need the card database (bot / solo duels start from a deck id).
+  const needsDb = mode !== 'online' && (/^real-/.test(deckParam) || useDecks.getState().decks.some((d) => d.id === deckParam && d.format !== 'demo' && d.main.some((id) => /^\d+$/.test(id))));
+  if (needsDb && dbStatus !== 'ready') {
+    return (
+      <div className="duel-loading">
+        <div className="spinner" />
+      </div>
+    );
+  }
   if (mode === 'online' && code) return <OnlineDuel code={code.toUpperCase()} />;
+  if (mode === 'solo') return <SoloDuel />;
   return <BotDuel />;
 }

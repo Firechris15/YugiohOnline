@@ -1,21 +1,28 @@
 // Room manager for online duels. The server owns the authoritative game
 // state; clients only send actions and receive their own filtered view.
+// Two duel modes exist: "auto" (rules enforced by the engine) and "free"
+// (players apply card effects themselves, every real card is playable).
 import {
   applyAction,
   createGame,
+  deckPool,
   detectArchetype,
+  duelFormat,
   getOptions,
   getView,
   randomSeed,
   validateDeck,
   type Action,
+  type DeckFormat,
   type DeckList,
+  type FreeBanlist,
   type GameState,
   type PlayerId,
 } from '../src/engine';
 import { Bot } from '../src/engine/ai/bot';
+import { applySandbox, createSandbox, sandboxView, type SbAction, type SbState } from '../src/engine/sandbox';
 import { countIds, playedCards, type GameRecord } from '../src/engine/meta';
-import type { ClientMsg, PublicRoom, RoomInfo, ServerMsg } from '../src/shared/protocol';
+import type { CardPool, ClientMsg, DuelMode, PublicRoom, RoomInfo, ServerMsg } from '../src/shared/protocol';
 import { EMOTES } from '../src/shared/protocol';
 
 export interface Conn {
@@ -24,7 +31,7 @@ export interface Conn {
   name: string;
   send(msg: ServerMsg): void;
   roomCode?: string;
-  queued?: { deck: DeckList; deckName: string };
+  queued?: { deck: DeckList; deckName: string; key: string; mode: DuelMode; banlist: FreeBanlist };
 }
 
 interface Seat {
@@ -38,12 +45,18 @@ interface Seat {
   disconnectedAt: number | null;
 }
 
-interface Room {
+export interface Room {
   code: string;
+  mode: DuelMode;
+  pool: CardPool;
+  format: DeckFormat;
   isPublic: boolean;
   createdAt: number;
   seats: [Seat, Seat | null];
+  /** automatic duel */
   game: GameState | null;
+  /** free duel */
+  sb: SbState | null;
   status: 'waiting' | 'playing' | 'finished';
   deadline: number | null;
   played: [Record<string, number>, Record<string, number>];
@@ -59,6 +72,7 @@ export interface RoomManagerOptions {
 }
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const BANLISTS: FreeBanlist[] = ['tcg', 'ocg', 'none'];
 
 export function sanitizeName(raw: unknown, fallback = 'Duelist'): string {
   const s = String(raw ?? '')
@@ -76,6 +90,9 @@ function sanitizeDeck(raw: unknown): DeckList | null {
   if (![...d.main, ...d.extra].every((x) => typeof x === 'string' && x.length < 16)) return null;
   return { main: d.main as string[], extra: d.extra as string[] };
 }
+
+const sanitizeMode = (m: unknown): DuelMode => (m === 'free' ? 'free' : 'auto');
+const sanitizeBanlist = (b: unknown): FreeBanlist => (BANLISTS.includes(b as FreeBanlist) ? (b as FreeBanlist) : 'tcg');
 
 export class RoomManager {
   private rooms = new Map<string, Room>();
@@ -124,12 +141,12 @@ export class RoomManager {
       case 'ping':
         return conn.send({ t: 'pong', online: this.onlineCount });
       case 'createRoom':
-        this.createRoom(conn, msg.deck, msg.deckName, !!msg.isPublic);
+        this.createRoom(conn, msg.deck, msg.deckName, !!msg.isPublic, sanitizeMode(msg.mode), sanitizeBanlist(msg.banlist));
         return;
       case 'joinRoom':
         return this.joinRoom(conn, String(msg.code ?? '').toUpperCase(), msg.deck, msg.deckName);
       case 'quickMatch':
-        return this.quickMatch(conn, msg.deck, msg.deckName);
+        return this.quickMatch(conn, msg.deck, msg.deckName, sanitizeMode(msg.mode), sanitizeBanlist(msg.banlist));
       case 'cancelQueue':
         this.queue = this.queue.filter((c) => c !== conn);
         conn.queued = undefined;
@@ -154,8 +171,23 @@ export class RoomManager {
   publicRooms(): PublicRoom[] {
     return [...this.rooms.values()]
       .filter((r) => r.isPublic && r.status === 'waiting' && r.seats[0].conn)
-      .map((r) => ({ code: r.code, host: r.seats[0].name, deckName: r.seats[0].deckName, createdAt: r.createdAt }))
+      .map((r) => ({ code: r.code, mode: r.mode, pool: r.pool, format: r.format, host: r.seats[0].name, deckName: r.seats[0].deckName, createdAt: r.createdAt }))
       .slice(0, 30);
+  }
+
+  // ------------------------------------------------------------ game access
+
+  private winner(room: Room): PlayerId | 'draw' | null {
+    return room.game ? room.game.winner : room.sb ? room.sb.winner : null;
+  }
+
+  private running(room: Room): boolean {
+    return room.status === 'playing' && (!!room.game || !!room.sb) && this.winner(room) === null;
+  }
+
+  private surrender(room: Room, p: PlayerId): void {
+    if (room.game) applyAction(room.game, p, { type: 'surrender' });
+    else if (room.sb) applySandbox(room.sb, p, { type: 'surrender' });
   }
 
   // ------------------------------------------------------------------ steps
@@ -180,13 +212,22 @@ export class RoomManager {
     }
   }
 
-  private checkDeck(conn: Conn, raw: unknown): DeckList | null {
+  /** Validates a deck; without a format the format follows from the deck's card pool. */
+  private checkDeck(conn: Conn, raw: unknown, mode: DuelMode, banlist: FreeBanlist, format?: DeckFormat): { deck: DeckList; pool: CardPool; format: DeckFormat } | null {
     const deck = sanitizeDeck(raw);
-    if (!deck || validateDeck(deck).length) {
-      conn.send({ t: 'error', code: 'invalid_deck', message: 'Your deck is not legal.' });
+    const pool = deck ? deckPool(deck) : 'demo';
+    const fmt = format ?? duelFormat(mode, pool, banlist);
+    const issues = deck ? validateDeck(deck, fmt) : [{ key: 'deck.invalid' }];
+    if (!deck || issues.length) {
+      const unknown = issues.some((i) => i.key === 'deck.unknownCard');
+      conn.send(
+        unknown
+          ? { t: 'error', code: 'cards_unavailable', message: 'The server does not know some of your cards.' }
+          : { t: 'error', code: 'invalid_deck', message: `Your deck is not legal (${issues[0]?.key ?? 'deck.invalid'}).` },
+      );
       return null;
     }
-    return deck;
+    return { deck, pool, format: fmt };
   }
 
   private newCode(): string {
@@ -201,17 +242,21 @@ export class RoomManager {
     return { clientId: conn.clientId, name: conn.name, deck, deckName: sanitizeName(deckName, 'Deck'), conn, lastSeq: 0, rematch: false, disconnectedAt: null };
   }
 
-  private createRoom(conn: Conn, rawDeck: unknown, deckName: string, isPublic: boolean): Room | undefined {
+  private createRoom(conn: Conn, rawDeck: unknown, deckName: string, isPublic: boolean, mode: DuelMode, banlist: FreeBanlist): Room | undefined {
     if (!conn.clientId) return void conn.send({ t: 'error', code: 'no_hello', message: 'Say hello first.' });
-    const deck = this.checkDeck(conn, rawDeck);
-    if (!deck) return;
+    const checked = this.checkDeck(conn, rawDeck, mode, banlist);
+    if (!checked) return;
     this.leave(conn);
     const room: Room = {
       code: this.newCode(),
+      mode,
+      pool: checked.pool,
+      format: checked.format,
       isPublic,
       createdAt: this.opts.now(),
-      seats: [this.seat(conn, deck, deckName), null],
+      seats: [this.seat(conn, checked.deck, deckName), null],
       game: null,
+      sb: null,
       status: 'waiting',
       deadline: null,
       played: [{}, {}],
@@ -230,33 +275,36 @@ export class RoomManager {
     if (!room) return conn.send({ t: 'error', code: 'room_not_found', message: 'Room not found.' });
     if (room.seats[0].clientId === conn.clientId) return conn.send({ t: 'error', code: 'own_room', message: 'You cannot join your own room.' });
     if (room.seats[1] || room.status !== 'waiting') return conn.send({ t: 'error', code: 'room_full', message: 'This room is already full.' });
-    const deck = this.checkDeck(conn, rawDeck);
-    if (!deck) return;
+    const deck = sanitizeDeck(rawDeck);
+    if (deck && deckPool(deck) !== room.pool) return conn.send({ t: 'error', code: 'wrong_pool', message: 'Your deck uses a different card pool than this room.' });
+    const checked = this.checkDeck(conn, rawDeck, room.mode, 'tcg', room.format);
+    if (!checked) return;
     this.leave(conn);
-    room.seats[1] = this.seat(conn, deck, deckName);
+    room.seats[1] = this.seat(conn, checked.deck, deckName);
     conn.roomCode = room.code;
     this.startGame(room);
   }
 
-  private quickMatch(conn: Conn, rawDeck: unknown, deckName: string): void {
+  private quickMatch(conn: Conn, rawDeck: unknown, deckName: string, mode: DuelMode, banlist: FreeBanlist): void {
     if (!conn.clientId) return conn.send({ t: 'error', code: 'no_hello', message: 'Say hello first.' });
-    const deck = this.checkDeck(conn, rawDeck);
-    if (!deck) return;
+    const checked = this.checkDeck(conn, rawDeck, mode, banlist);
+    if (!checked) return;
+    const key = `${mode}:${checked.format}`;
     this.leave(conn);
     this.queue = this.queue.filter((c) => c !== conn && this.conns.has(c.id));
-    const other = this.queue.find((c) => c.clientId !== conn.clientId);
+    const other = this.queue.find((c) => c.clientId !== conn.clientId && c.queued?.key === key);
     if (!other || !other.queued) {
-      conn.queued = { deck, deckName };
+      conn.queued = { deck: checked.deck, deckName, key, mode, banlist };
       this.queue.push(conn);
-      conn.send({ t: 'queued', position: this.queue.length });
+      conn.send({ t: 'queued', position: this.queue.filter((c) => c.queued?.key === key).length });
       return;
     }
     this.queue = this.queue.filter((c) => c !== other);
     const q = other.queued;
     other.queued = undefined;
-    const room = this.createRoom(other, q.deck, q.deckName, false);
+    const room = this.createRoom(other, q.deck, q.deckName, false, q.mode, q.banlist);
     if (!room) return;
-    room.seats[1] = this.seat(conn, deck, deckName);
+    room.seats[1] = this.seat(conn, checked.deck, deckName);
     conn.roomCode = room.code;
     this.startGame(room);
   }
@@ -264,7 +312,9 @@ export class RoomManager {
   private startGame(room: Room): void {
     const [a, b] = room.seats;
     if (!b) return;
-    room.game = createGame({ decks: [a.deck, b.deck], names: [a.name, b.name], seed: randomSeed() });
+    const opts = { decks: [a.deck, b.deck] as [DeckList, DeckList], names: [a.name, b.name] as [string, string], seed: randomSeed() };
+    room.game = room.mode === 'auto' ? createGame(opts) : null;
+    room.sb = room.mode === 'free' ? createSandbox(opts) : null;
     room.status = 'playing';
     room.played = [{}, {}];
     room.harvestedSeq = 0;
@@ -284,8 +334,8 @@ export class RoomManager {
     if (!room) return;
     const idx = room.seats.findIndex((s) => s?.conn === conn);
     if (idx < 0) return;
-    if (room.status === 'playing' && room.game && room.game.winner === null) {
-      applyAction(room.game, idx as PlayerId, { type: 'surrender' });
+    if (this.running(room)) {
+      this.surrender(room, idx as PlayerId);
       this.afterChange(room);
     }
     const other = room.seats[idx === 0 ? 1 : 0];
@@ -303,15 +353,15 @@ export class RoomManager {
     return p < 0 ? null : { room, p: p as PlayerId };
   }
 
-  private action(conn: Conn, action: Action): void {
+  private action(conn: Conn, action: Action | SbAction): void {
     const s = this.seatOf(conn);
-    if (!s || !s.room.game || s.room.status !== 'playing') return conn.send({ t: 'error', code: 'no_game', message: 'No running duel.' });
+    if (!s || !this.running(s.room)) return conn.send({ t: 'error', code: 'no_game', message: 'No running duel.' });
     if (!action || typeof action !== 'object' || typeof (action as { type?: unknown }).type !== 'string') {
       return conn.send({ t: 'error', code: 'bad_action', message: 'Malformed action.' });
     }
     let res;
     try {
-      res = applyAction(s.room.game, s.p, action);
+      res = s.room.game ? applyAction(s.room.game, s.p, action as Action) : applySandbox(s.room.sb!, s.p, action as SbAction);
     } catch (e) {
       console.error('engine error', e);
       res = { ok: false as const, error: 'engine error' };
@@ -325,12 +375,12 @@ export class RoomManager {
   }
 
   private afterChange(room: Room): void {
-    const g = room.game;
+    const g = room.game ?? room.sb;
     if (!g) return;
     // harvest played cards for stats before events are trimmed
-    const fresh = g.events.filter((e) => e.seq > room.harvestedSeq);
+    const fresh = (g.events as { seq: number; type: string; defId?: string | null; player?: PlayerId }[]).filter((e) => e.seq > room.harvestedSeq);
     room.harvestedSeq = g.eventSeq;
-    const counted = playedCards({ ...g, events: fresh });
+    const counted = playedCards({ events: fresh });
     for (const q of [0, 1] as PlayerId[]) for (const [id, n] of Object.entries(counted[q])) room.played[q][id] = (room.played[q][id] ?? 0) + n;
     if (g.winner !== null) {
       room.status = 'finished';
@@ -342,7 +392,7 @@ export class RoomManager {
   }
 
   private record(room: Room): void {
-    const g = room.game;
+    const g = room.game ?? room.sb;
     if (!g || room.recorded || !room.seats[1]) return;
     room.recorded = true;
     if (g.turn < 2 && g.winReason === 'surrender') return; // ignore instant forfeits
@@ -357,11 +407,14 @@ export class RoomManager {
       played: room.played,
       mode: 'online',
       at: this.opts.now(),
+      pool: room.pool,
+      format: room.mode,
     });
   }
 
+  /** Automatic duels have a per-decision clock; free duels only time out on disconnect. */
   private touchDeadline(room: Room): void {
-    room.deadline = this.opts.now() + this.opts.decisionMs;
+    room.deadline = room.mode === 'auto' ? this.opts.now() + this.opts.decisionMs : null;
   }
 
   private chat(conn: Conn, text: string): void {
@@ -395,15 +448,14 @@ export class RoomManager {
   tick(): void {
     const now = this.opts.now();
     for (const room of [...this.rooms.values()]) {
-      const g = room.game;
-      if (room.status === 'playing' && g && g.winner === null) {
+      if (this.running(room)) {
         for (const [i, seat] of room.seats.entries()) {
-          if (seat && !seat.conn && seat.disconnectedAt && now - seat.disconnectedAt > this.opts.reconnectMs) {
-            applyAction(g, i as PlayerId, { type: 'surrender' });
+          if (this.running(room) && seat && !seat.conn && seat.disconnectedAt && now - seat.disconnectedAt > this.opts.reconnectMs) {
+            this.surrender(room, i as PlayerId);
             this.afterChange(room);
           }
         }
-        if (g.winner === null && room.deadline && now > room.deadline) this.autoPlay(room);
+        if (room.game && this.running(room) && room.deadline && now > room.deadline) this.autoPlay(room);
       }
       const bothGone = room.seats.every((s) => !s || !s.conn);
       const stale = now - room.createdAt > 6 * 60 * 60 * 1000;
@@ -436,6 +488,9 @@ export class RoomManager {
   private roomInfo(room: Room, you: PlayerId): RoomInfo {
     return {
       code: room.code,
+      mode: room.mode,
+      pool: room.pool,
+      format: room.format,
       status: room.status,
       you,
       isPublic: room.isPublic,
@@ -449,11 +504,11 @@ export class RoomManager {
   }
 
   private sendState(room: Room, only?: PlayerId): void {
-    const g = room.game;
+    const g = room.game ?? room.sb;
     if (!g) return;
     room.seats.forEach((s, i) => {
       if (!s?.conn || (only !== undefined && only !== i)) return;
-      const view = getView(g, i as PlayerId, s.lastSeq);
+      const view = room.game ? getView(room.game, i as PlayerId, s.lastSeq) : sandboxView(room.sb!, i as PlayerId, s.lastSeq);
       s.lastSeq = g.eventSeq;
       s.conn.send({ t: 'state', view });
     });

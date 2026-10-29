@@ -4,6 +4,11 @@ import { STARTER_DECKS, getOptions, type GameView } from '../src/engine';
 import type { RoomInfo, ServerMsg } from '../src/shared/protocol';
 import type { GameRecord } from '../src/engine/meta';
 import { Bot } from '../src/engine/ai/bot';
+import type { SbView } from '../src/engine/sandbox';
+import { compactCards } from '../src/shared/ygo';
+import { fixtureCards } from '../src/engine/real/fixture';
+import { registerRealCards } from '../src/engine/real';
+import { REAL_STARTERS, resolveRealStarter } from '../src/engine/real/decks';
 
 function fakeConn(id: string): Conn & { inbox: ServerMsg[]; last<T extends ServerMsg['t']>(t: T): Extract<ServerMsg, { t: T }> | undefined } {
   const inbox: ServerMsg[] = [];
@@ -138,5 +143,61 @@ describe('RoomManager', () => {
     now = 10_000;
     rm.tick();
     expect(g.winner).toBe(1);
+  });
+
+  it('runs free duels: manual actions, hidden information and records', () => {
+    registerRealCards(compactCards(fixtureCards()), 'fixture-rooms');
+    const realDeck = resolveRealStarter(REAL_STARTERS[0])!;
+    const records: GameRecord[] = [];
+    const rm = new RoomManager({ onRecord: (r) => records.push(r) });
+    const a = fakeConn('a');
+    const b = fakeConn('b');
+    rm.connect(a);
+    rm.connect(b);
+    rm.handle(a, { t: 'hello', name: 'A', clientId: 'aaaaaaaaaa' });
+    rm.handle(b, { t: 'hello', name: 'B', clientId: 'bbbbbbbbbb' });
+    rm.handle(a, { t: 'createRoom', deck: realDeck, deckName: 'Real', mode: 'free', banlist: 'none' });
+    const info = a.last('room')!.room;
+    expect(info).toMatchObject({ mode: 'free', pool: 'real', format: 'none' });
+    // a demo deck cannot join a real-card room
+    rm.handle(b, { t: 'joinRoom', code: info.code, deck, deckName: 'Demo' });
+    expect(b.last('error')!.code).toBe('wrong_pool');
+    rm.handle(b, { t: 'joinRoom', code: info.code, deck: resolveRealStarter(REAL_STARTERS[1])!, deckName: 'Real 2' });
+    const room = rm.getRoom(info.code)!;
+    expect(room.status).toBe('playing');
+    expect(room.sb).not.toBeNull();
+    expect(room.deadline).toBeNull(); // no decision clock in free duels
+    const va = a.last('state')!.view as SbView;
+    expect(va.mode).toBe('free');
+    const first = room.sb!.turnPlayer;
+    const [cur, other] = first === 0 ? [a, b] : [b, a];
+    const card = room.sb!.players[first].hand[0];
+    rm.handle(cur, { t: 'action', action: { type: 'move', uid: card, to: 'szone', faceUp: false } });
+    const seen = (other.last('state')!.view as SbView).players[first].szone.find((c) => c?.uid === card);
+    expect(seen?.defId).toBeNull(); // set cards stay hidden from the opponent
+    rm.handle(other, { t: 'action', action: { type: 'endTurn' } });
+    expect(other.last('error')!.code).toBe('illegal_action');
+    rm.handle(cur, { t: 'action', action: { type: 'endTurn' } });
+    expect(room.sb!.turnPlayer).not.toBe(first);
+    rm.handle(other, { t: 'action', action: { type: 'lp', player: first, delta: -8000 } });
+    expect(room.status).toBe('finished');
+    expect(records).toHaveLength(1);
+    expect(records[0]).toMatchObject({ pool: 'real', format: 'free' });
+  });
+
+  it('keeps quick match queues apart per mode', () => {
+    const rm = new RoomManager();
+    const a = fakeConn('a');
+    const b = fakeConn('b');
+    rm.connect(a);
+    rm.connect(b);
+    rm.handle(a, { t: 'hello', name: 'A', clientId: 'aaaaaaaaaa' });
+    rm.handle(b, { t: 'hello', name: 'B', clientId: 'bbbbbbbbbb' });
+    rm.handle(a, { t: 'quickMatch', deck, deckName: 'x', mode: 'free' });
+    rm.handle(b, { t: 'quickMatch', deck, deckName: 'y' });
+    expect(b.last('queued')).toBeDefined();
+    expect(b.last('room')).toBeUndefined();
+    rm.handle(b, { t: 'quickMatch', deck, deckName: 'y', mode: 'free' });
+    expect(b.last('room')!.room).toMatchObject({ mode: 'free', status: 'playing' });
   });
 });

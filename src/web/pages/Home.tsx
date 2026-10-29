@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { ARCHETYPES, STARTER_DECKS, allCards } from '../../engine';
+import { ARCHETYPES, REAL_STARTERS, STARTER_DECKS, allCards, realCardByName, realId, realStarterCover } from '../../engine';
 import { useT } from '../i18n';
 import { Card } from '../components/Card';
 import { Particles } from '../components/Particles';
@@ -9,12 +9,22 @@ import { Icon } from '../components/Icons';
 import { CardModal } from '../components/CardDetail';
 import { probeServer } from '../lib/net';
 import metaSim from '../../data/meta-sim.json';
+import metaReal from '../../data/meta-real.json';
 import type { MetaStats } from '../../engine/meta';
+import { inPool, useCardPool, useCardDb } from '../lib/carddb';
 import { IS_STATIC, SITE_NAME } from '../config';
 import '../styles/home.css';
 
 const META = metaSim as MetaStats;
+const META_REAL = metaReal as MetaStats;
 const HERO_CARDS = ['GLM-F01', 'TID-005', 'EMB-F01', 'LUM-F01', 'AST-F01'];
+const REAL_HERO = ['Dark Magician Girl', 'Blue-Eyes White Dragon', 'Dark Magician', 'Red-Eyes Black Dragon', 'Exodia the Forbidden One'];
+
+function heroCards(pool: 'real' | 'demo'): string[] {
+  if (pool === 'demo') return HERO_CARDS;
+  const ids = REAL_HERO.map((n) => realCardByName(n)).filter((c) => !!c).map((c) => realId(c!.id));
+  return ids.length === REAL_HERO.length ? ids : HERO_CARDS;
+}
 const BOSS_BY_ARCH: Record<string, string> = {
   emberwing: 'EMB-005',
   tidecaller: 'TID-F01',
@@ -29,7 +39,9 @@ const BOSS_BY_ARCH: Record<string, string> = {
 function useCountUp(target: number, duration = 1400) {
   const [v, setV] = useState(0);
   const started = useRef(false);
+  const goal = useRef(target);
   const ref = useRef<HTMLSpanElement>(null);
+  goal.current = target;
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -39,14 +51,15 @@ function useCountUp(target: number, duration = 1400) {
       const t0 = performance.now();
       const step = (now: number) => {
         const p = Math.min(1, (now - t0) / duration);
-        setV(Math.round(target * (1 - Math.pow(1 - p, 3))));
+        // read the latest target: it can change while counting (real cards loading)
+        setV(Math.round(goal.current * (1 - Math.pow(1 - p, 3))));
         if (p < 1) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
     });
     io.observe(el);
     return () => io.disconnect();
-  }, [target, duration]);
+  }, [duration]);
   useEffect(() => {
     if (started.current) setV(target);
   }, [target]);
@@ -65,7 +78,7 @@ function Stat({ value, label }: { value: number; label: string }) {
   );
 }
 
-function HeroFan({ onPick }: { onPick: (id: string) => void }) {
+function HeroFan({ onPick, cards: HERO_CARDS }: { onPick: (id: string) => void; cards: string[] }) {
   const mx = useMotionValue(0);
   const my = useMotionValue(0);
   const sx = useSpring(mx, { stiffness: 60, damping: 14 });
@@ -112,7 +125,16 @@ export function HomePage() {
   useEffect(() => {
     void probeServer().then((r) => setOnline(r.online));
   }, []);
-  const winRate = Object.fromEntries(META.archetypes.map((a) => [a.id, a.winRate]));
+  const { pool } = useCardPool();
+  useCardDb((s) => s.version);
+  const meta = pool === 'real' ? META_REAL : META;
+  const winRate = Object.fromEntries(meta.archetypes.map((a) => [a.id, a.winRate]));
+  const poolCards = allCards().filter((d) => inPool(d, pool));
+  const archetypeCount = pool === 'real' ? new Set(poolCards.map((d) => d.archetype).filter(Boolean)).size : ARCHETYPES.length;
+  const tiles =
+    pool === 'real'
+      ? REAL_STARTERS.map((s) => ({ id: s.id, name: s.name[t.lang], description: s.description[t.lang], color: s.color, boss: realStarterCover(s) })).filter((x): x is typeof x & { boss: string } => !!x.boss)
+      : ARCHETYPES.map((a) => ({ id: a.id, name: a.name[t.lang], description: a.description[t.lang], color: a.color, boss: BOSS_BY_ARCH[a.id] }));
 
   const features = [
     { to: '/library', icon: <Icon.Book size={26} />, title: t('home.f.library'), text: t('home.f.library.d'), color: '#4de1ff' },
@@ -136,7 +158,7 @@ export function HomePage() {
               <span className="gradient-text">{t('home.title2')}</span>
             </motion.h1>
             <motion.p variants={fadeUp} className="hero-lead">
-              {t('home.lead')}
+              {t(pool === 'real' ? 'home.leadReal' : 'home.lead')}
             </motion.p>
             <motion.div variants={fadeUp} className="row row-wrap hero-ctas">
               <Link to="/play" className="btn btn-primary btn-lg">
@@ -148,17 +170,17 @@ export function HomePage() {
             </motion.div>
           </motion.div>
           <div className="hero-visual">
-            <HeroFan onPick={setPicked} />
+            <HeroFan key={pool} onPick={setPicked} cards={heroCards(pool)} />
           </div>
         </div>
       </section>
 
       <section className="home-stats page" style={{ paddingTop: 0, paddingBottom: 0 }}>
         <div className="home-stats-inner panel">
-          <Stat value={allCards().length} label={t('home.stat.cards')} />
-          <Stat value={ARCHETYPES.length} label={t('home.stat.archetypes')} />
-          <Stat value={META.games} label={t('home.stat.duels')} />
-          {IS_STATIC ? <Stat value={STARTER_DECKS.length} label={t('home.stat.starters')} /> : <Stat value={online} label={t('home.stat.online')} />}
+          <Stat value={poolCards.length} label={t('home.stat.cards')} />
+          <Stat value={archetypeCount} label={t('home.stat.archetypes')} />
+          <Stat value={meta.games} label={t('home.stat.duels')} />
+          {IS_STATIC ? <Stat value={pool === 'real' ? REAL_STARTERS.length : STARTER_DECKS.length} label={t('home.stat.starters')} /> : <Stat value={online} label={t('home.stat.online')} />}
         </div>
       </section>
 
@@ -193,7 +215,7 @@ export function HomePage() {
           </Link>
         </div>
         <div className="arch-grid">
-          {ARCHETYPES.map((a, i) => (
+          {tiles.map((a, i) => (
             <motion.button
               key={a.id}
               className="arch-tile"
@@ -202,14 +224,14 @@ export function HomePage() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.05 }}
-              onClick={() => setPicked(BOSS_BY_ARCH[a.id])}
+              onClick={() => setPicked(a.boss)}
             >
               <div className="arch-tile-card">
-                <Card defId={BOSS_BY_ARCH[a.id]} size="md" />
+                <Card defId={a.boss} size="md" />
               </div>
               <div className="arch-tile-info">
-                <h3>{a.name[t.lang]}</h3>
-                <p>{a.description[t.lang]}</p>
+                <h3>{a.name}</h3>
+                <p>{a.description}</p>
                 {winRate[a.id] !== undefined && (
                   <div className="arch-wr">
                     <span>{t('home.winrate')}</span>

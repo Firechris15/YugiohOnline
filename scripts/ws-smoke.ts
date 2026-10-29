@@ -12,7 +12,7 @@ const open = (name: string, id: string) =>
     ws.on('message', (d) => {
       const m = JSON.parse(String(d)) as ServerMsg;
       c.inbox.push(m);
-      if (m.t === 'state') c.view = m.view;
+      if (m.t === 'state') c.view = m.view as GameView;
     });
     ws.on('open', () => {
       ws.send(JSON.stringify({ t: 'hello', name, clientId: id }));

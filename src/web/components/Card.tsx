@@ -1,9 +1,12 @@
-// Card face / card back rendering (original DuelForge frame design).
-import { memo, useRef, type CSSProperties, type MouseEvent } from 'react';
+// Card face / card back rendering: real cards show their official artwork
+// image, DuelForge demo cards (and real cards whose image cannot be loaded)
+// use the original procedural frame design.
+import { memo, useRef, useState, type CSSProperties, type MouseEvent } from 'react';
 import { getDef, hasDef } from '../../engine';
 import { cardArtUrl } from '../art/generate';
 import { useT } from '../i18n';
 import { frameColor } from '../lib/cards';
+import { realImage } from '../lib/carddb';
 import { AttributeGlyph, Icon, SubtypeGlyph } from './Icons';
 import '../styles/card.css';
 
@@ -25,6 +28,8 @@ export interface CardProps {
   title?: string;
   count?: number;
   dim?: boolean;
+  /** banlist limit to show as a badge (0 = forbidden) */
+  limit?: number;
 }
 
 export const CardBack = memo(function CardBack({ size = 'md', className = '', style }: { size?: CardSize; className?: string; style?: CSSProperties }) {
@@ -64,11 +69,16 @@ export const CardBack = memo(function CardBack({ size = 'md', className = '', st
   );
 });
 
-function CardFaceImpl({ defId, size = 'md', faceDown, atk, def, holo, className = '', style, onClick, onContextMenu, onMouseEnter, onMouseLeave, title, count, dim }: CardProps) {
+const fmtStat = (n: number) => (n < 0 ? '?' : String(n));
+
+function CardFaceImpl({ defId, size = 'md', faceDown, atk, def, holo, className = '', style, onClick, onContextMenu, onMouseEnter, onMouseLeave, title, count, dim, limit }: CardProps) {
   const t = useT();
   const ref = useRef<HTMLDivElement>(null);
+  const [failed, setFailed] = useState<string | null>(null);
   if (!defId || faceDown || !hasDef(defId)) return <CardBack size={size} className={className} style={style} />;
   const d = getDef(defId);
+  const img = failed === defId ? null : realImage(defId, size === 'lg' || size === 'xl' ? 'full' : 'small');
+  const shownLimit = limit ?? d.limit;
   const color = frameColor(d);
   const isMonster = d.kind === 'monster';
   const foil = d.rarity === 'super' || d.rarity === 'ultra' || d.rarity === 'secret';
@@ -96,6 +106,39 @@ function CardFaceImpl({ defId, size = 'md', faceDown, atk, def, holo, className 
     onMouseLeave?.();
   };
 
+  if (img) {
+    const showStats = d.kind === 'monster' && (atk !== undefined || def !== undefined);
+    return (
+      <div
+        ref={ref}
+        className={`card card-${size} card-real kind-${d.kind} ${holo ? 'card-holo' : ''} ${dim ? 'card-dim' : ''} ${className}`}
+        style={{ ...style, ['--fc' as string]: color }}
+        onClick={onClick}
+        onContextMenu={onContextMenu}
+        onMouseMove={onMove}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onLeave}
+        title={title ?? d.name[t.lang]}
+        data-def={defId}
+      >
+        <div className="card-tilt">
+          <div className="card-frame">
+            <img className="card-img" src={img} alt={d.name[t.lang]} draggable={false} loading="lazy" decoding="async" onError={() => setFailed(defId)} />
+            {showStats && (
+              <div className="card-real-stats">
+                <span className={`card-stat atk ${atkDelta > 0 ? 'up' : atkDelta < 0 ? 'down' : ''}`}>{fmtStat(shownAtk)}</span>
+                {!d.linkVal && <span className={`card-stat def ${defDelta > 0 ? 'up' : defDelta < 0 ? 'down' : ''}`}>{fmtStat(shownDef)}</span>}
+              </div>
+            )}
+            {holo && <div className="card-glare" />}
+          </div>
+        </div>
+        {count !== undefined && count > 1 ? <span className="card-count">×{count}</span> : null}
+        {shownLimit !== undefined && shownLimit < 3 ? <span className={`card-limit ${shownLimit === 0 ? 'banned' : ''}`}>{shownLimit}</span> : null}
+      </div>
+    );
+  }
+
   return (
     <div
       ref={ref}
@@ -121,7 +164,7 @@ function CardFaceImpl({ defId, size = 'md', faceDown, atk, def, holo, className 
           </div>
           {isMonster && d.level ? (
             <div className="card-level" aria-label={`${t('card.level')} ${d.level}`}>
-              {Array.from({ length: d.level }, (_, i) => (
+              {Array.from({ length: Math.min(d.level, 12) }, (_, i) => (
                 <i key={i} />
               ))}
             </div>
@@ -136,12 +179,12 @@ function CardFaceImpl({ defId, size = 'md', faceDown, atk, def, holo, className 
               <>
                 <span className={`card-stat atk ${atkDelta > 0 ? 'up' : atkDelta < 0 ? 'down' : ''}`}>
                   <Icon.Sword size={9} />
-                  {shownAtk}
+                  {fmtStat(shownAtk)}
                 </span>
-                <span className="card-type-mini">{d.frame === 'fusion' ? '✦' : ''}</span>
+                <span className="card-type-mini">{d.frame && d.frame !== 'normal' && d.frame !== 'effect' ? '✦' : ''}</span>
                 <span className={`card-stat def ${defDelta > 0 ? 'up' : defDelta < 0 ? 'down' : ''}`}>
                   <Icon.Shield size={9} />
-                  {shownDef}
+                  {d.linkVal ? `L${d.linkVal}` : fmtStat(shownDef)}
                 </span>
               </>
             ) : (
@@ -153,7 +196,7 @@ function CardFaceImpl({ defId, size = 'md', faceDown, atk, def, holo, className 
         </div>
       </div>
       {count !== undefined && count > 1 ? <span className="card-count">×{count}</span> : null}
-      {d.limit !== undefined && d.limit < 3 ? <span className="card-limit">{d.limit}</span> : null}
+      {shownLimit !== undefined && shownLimit < 3 ? <span className={`card-limit ${shownLimit === 0 ? 'banned' : ''}`}>{shownLimit}</span> : null}
     </div>
   );
 }

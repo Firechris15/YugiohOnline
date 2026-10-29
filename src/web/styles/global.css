@@ -646,3 +646,35 @@ label.field {
   margin: 0;
   font-size: 20px;
 }
+
+/* segmented control */
+.seg {
+  display: flex;
+  padding: 3px;
+  gap: 3px;
+  border-radius: 12px;
+  background: rgba(8, 11, 28, 0.7);
+  border: 1px solid var(--panel-border);
+}
+
+.seg-btn {
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.seg-btn.active {
+  color: #fff;
+  background: linear-gradient(120deg, rgba(47, 208, 255, 0.4), rgba(177, 77, 255, 0.4));
+}
+
+.pool-switch .seg-btn {
+  white-space: nowrap;
+  padding: 8px 12px;
+}

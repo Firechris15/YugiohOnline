@@ -363,3 +363,38 @@
 .odds-val {
   font-weight: 700;
 }
+
+.ydk-text {
+  width: 100%;
+  font-family: var(--mono, ui-monospace, monospace);
+  font-size: 12.5px;
+  resize: vertical;
+  min-height: 160px;
+}
+
+.builder-pool-grid.vgrid {
+  display: block;
+  flex: 1;
+  min-height: 240px;
+}
+
+.builder-pool-grid .vgrid-cell {
+  display: flex;
+  justify-content: center;
+}
+
+.builder-format {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 4px 0 10px;
+}
+
+.builder-format .seg {
+  flex: 0 1 auto;
+}
+
+.builder-format .seg-btn {
+  padding: 6px 12px;
+}

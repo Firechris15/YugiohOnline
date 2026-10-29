@@ -37,6 +37,52 @@ const TRAP: Record<string, TrapType> = { Normal: 'normal', Continuous: 'continuo
 
 export const realId = (passcode: number) => String(passcode);
 
+/** German words for the type line ("Spellcaster / Effect" → "Hexer / Effekt"). */
+const TYPE_DE: Record<string, string> = {
+  Warrior: 'Krieger',
+  Spellcaster: 'Hexer',
+  Fairy: 'Fee',
+  Fiend: 'Unterweltler',
+  Zombie: 'Zombie',
+  Machine: 'Maschine',
+  Aqua: 'Aqua',
+  Pyro: 'Pyro',
+  Rock: 'Fels',
+  'Winged Beast': 'Geflügeltes Ungeheuer',
+  Plant: 'Pflanze',
+  Insect: 'Insekt',
+  Thunder: 'Donner',
+  Dragon: 'Drache',
+  Beast: 'Ungeheuer',
+  'Beast-Warrior': 'Ungeheuer-Krieger',
+  Dinosaur: 'Dinosaurier',
+  Fish: 'Fisch',
+  'Sea Serpent': 'Seeschlange',
+  Reptile: 'Reptil',
+  Psychic: 'Psi',
+  'Divine-Beast': 'Göttliches Ungeheuer',
+  'Creator-God': 'Schöpfergott',
+  'Creator God': 'Schöpfergott',
+  Wyrm: 'Wyrm',
+  Cyberse: 'Cyberse',
+  Illusion: 'Illusion',
+  Effect: 'Effekt',
+  Normal: 'Normal',
+  Fusion: 'Fusion',
+  Ritual: 'Ritual',
+  Synchro: 'Synchro',
+  Xyz: 'Xyz',
+  XYZ: 'Xyz',
+  Link: 'Link',
+  Pendulum: 'Pendel',
+  Flip: 'Flipp',
+  Spirit: 'Spirit',
+  Union: 'Union',
+  Gemini: 'Zwilling',
+  Toon: 'Toon',
+  Tuner: 'Empfänger',
+};
+
 let byName = new Map<string, YgoCard>();
 let byId = new Map<number, YgoCard>();
 
@@ -101,6 +147,8 @@ export function buildRealDef(c: YgoCard): CardDef {
       d.linkVal = c.lv;
       d.linkMarkers = c.lm;
     }
+    const tl = c.tl?.length ? c.tl : [c.r, ...(hasEffectLine(c) ? ['Effect'] : [])];
+    d.typeLine = { en: tl.join(' / '), de: tl.map((w) => TYPE_DE[w] ?? w).join(' / ') };
     d.rarity = d.frame === 'normal' || d.frame === 'effect' ? 'common' : 'super';
   } else if (isSpell) d.spellType = SPELL[c.r] ?? 'normal';
   else d.trapType = TRAP[c.r] ?? 'normal';

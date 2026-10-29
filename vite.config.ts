@@ -9,6 +9,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': `http://localhost:${SERVER_PORT}`,
+      '/img': `http://localhost:${SERVER_PORT}`,
       '/ws': { target: `ws://localhost:${SERVER_PORT}`, ws: true },
     },
   },

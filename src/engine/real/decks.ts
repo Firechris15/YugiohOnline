@@ -3,7 +3,7 @@
 import type { DeckList } from '../types';
 import { getDef, hasDef } from '../db';
 import { realCardByName, realId } from './index';
-import { cardLimit, DECK_RULES, type DeckFormat } from '../decks';
+import { cardLimit, DECK_RULES, setRealArchetypeDetector, type DeckFormat } from '../decks';
 
 export interface RealStarter {
   id: string;
@@ -137,3 +137,36 @@ export function realStarterCover(s: RealStarter): string | null {
   const c = realCardByName(s.cover);
   return c ? realId(c.id) : null;
 }
+
+export const REAL_STARTER_BY_ID: Record<string, RealStarter> = Object.fromEntries(REAL_STARTERS.map((s) => [s.id, s]));
+
+/**
+ * Archetype label of a real deck: the starter deck it is built from (60 %+ of
+ * its cards), otherwise the dominant card archetype, otherwise "mixed".
+ */
+export function detectRealArchetype(deck: DeckList): string {
+  const ids = [...deck.main, ...deck.extra];
+  if (!ids.length) return 'mixed';
+  let best: string | null = null;
+  let bestShare = 0;
+  for (const s of REAL_STARTERS) {
+    const list = resolveRealStarter(s);
+    if (!list) continue;
+    const pool = new Set([...list.main, ...list.extra]);
+    const share = ids.filter((id) => pool.has(id)).length / ids.length;
+    if (share > bestShare) {
+      best = s.id;
+      bestShare = share;
+    }
+  }
+  if (best && bestShare >= 0.6) return best;
+  const counts: Record<string, number> = {};
+  for (const id of ids) {
+    const a = hasDef(id) ? getDef(id).archetype : undefined;
+    if (a) counts[a] = (counts[a] ?? 0) + 1;
+  }
+  const [top] = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  return top && top[1] >= 8 ? top[0] : 'mixed';
+}
+
+setRealArchetypeDetector(detectRealArchetype);

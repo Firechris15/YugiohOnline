@@ -1,22 +1,40 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { useT } from '../i18n';
 import { Card } from '../components/Card';
 import { CardModal } from '../components/CardDetail';
-import { CardFilterBar, DEFAULT_FILTERS, useFilteredCards, type FilterState } from '../components/CardFilters';
-import { useDecks } from '../store/decks';
+import { CardFilterBar, DEFAULT_FILTERS, useFilteredCards, usePoolCards, type FilterState } from '../components/CardFilters';
+import { CardDbNotice, PoolSwitch } from '../components/PoolSwitch';
+import { VirtualGrid } from '../components/VirtualGrid';
+import { useDecks, deckFormat, deckPoolOf } from '../store/decks';
 import { toast } from '../store/ui';
-import { getDef, isExtraDeckCard } from '../../engine';
+import { useCardPool } from '../lib/carddb';
+import { cardLimit, getDef, isExtraDeckCard } from '../../engine';
 import '../styles/library.css';
+
+function useNarrow(): boolean {
+  const [narrow, setNarrow] = useState(() => window.innerWidth <= 640);
+  useEffect(() => {
+    const on = () => setNarrow(window.innerWidth <= 640);
+    window.addEventListener('resize', on);
+    return () => window.removeEventListener('resize', on);
+  }, []);
+  return narrow;
+}
 
 export default function LibraryPage() {
   const t = useT();
+  const { pool } = useCardPool();
   const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
-  const cards = useFilteredCards(filters, t.lang);
+  const cards = useFilteredCards(filters, t.lang, pool);
+  const total = usePoolCards(pool, t.lang).length;
   const [picked, setPicked] = useState<string | null>(null);
-  const decks = useDecks((s) => s.decks);
+  const decks = useDecks((s) => s.decks).filter((d) => deckPoolOf(d) === pool);
   const update = useDecks((s) => s.update);
   const [target, setTarget] = useState('');
+  const narrow = useNarrow();
+  const cardW = narrow ? 104 : 150;
+
+  useEffect(() => setFilters(DEFAULT_FILTERS), [pool]);
 
   const addToDeck = () => {
     if (!picked) return;
@@ -24,8 +42,9 @@ export default function LibraryPage() {
     if (!deck) return;
     const d = getDef(picked);
     const copies = [...deck.main, ...deck.extra].filter((x) => x === picked).length;
-    if (copies >= (d.limit ?? 3)) {
-      toast(t('deck.tooManyCopies', { card: d.name[t.lang], n: copies + 1, limit: d.limit ?? 3 }), 'error');
+    const limit = cardLimit(d, deckFormat(deck));
+    if (copies >= limit) {
+      toast(t(limit === 0 ? 'deck.banned' : 'deck.tooManyCopies', { card: d.name[t.lang], n: copies + 1, limit }), 'error');
       return;
     }
     if (isExtraDeckCard(d)) update(deck.id, { extra: [...deck.extra, picked] });
@@ -37,32 +56,35 @@ export default function LibraryPage() {
     <div className="page">
       <div className="page-header">
         <div>
-          <span className="eyebrow">{t('lib.count', { n: cards.length })}</span>
+          <span className="eyebrow">{cards.length === total ? t('lib.count', { n: total.toLocaleString(t.lang) }) : t('lib.showing', { n: cards.length.toLocaleString(t.lang), total: total.toLocaleString(t.lang) })}</span>
           <h1>{t('lib.title')}</h1>
-          <p>{t('lib.lead')}</p>
+          <p>{t(pool === 'real' ? 'lib.leadReal' : 'lib.lead')}</p>
         </div>
+        <PoolSwitch />
       </div>
+      <CardDbNotice />
       <div className="panel panel-pad lib-filters">
-        <CardFilterBar value={filters} onChange={setFilters} />
+        <CardFilterBar value={filters} onChange={setFilters} pool={pool} />
       </div>
       {cards.length === 0 ? (
         <div className="empty">{t('lib.none')}</div>
       ) : (
-        <motion.div className="lib-grid" initial="hidden" animate="show" key={JSON.stringify(filters)} variants={{ show: { transition: { staggerChildren: 0.012 } } }}>
-          {cards.map((c) => (
-            <motion.button
-              key={c.id}
-              className="lib-item"
-              variants={{ hidden: { opacity: 0, y: 16, scale: 0.96 }, show: { opacity: 1, y: 0, scale: 1 } }}
-              whileHover={{ y: -8, transition: { type: 'spring', stiffness: 400, damping: 22 } }}
-              onClick={() => setPicked(c.id)}
-            >
+        <VirtualGrid
+          className="lib-vgrid"
+          items={cards}
+          getKey={(c) => c.id}
+          minItemWidth={cardW + 8}
+          gap={narrow ? 12 : 20}
+          rowHeight={() => Math.ceil((cardW * 86) / 59) + 44}
+          renderItem={(c) => (
+            <button className="lib-item" onClick={() => setPicked(c.id)}>
               <Card defId={c.id} size="md" holo />
               <span className="lib-item-name">{c.name[t.lang]}</span>
-            </motion.button>
-          ))}
-        </motion.div>
+            </button>
+          )}
+        />
       )}
+      {pool === 'real' && <p className="faint tiny lib-credit">{t('carddb.credit')}</p>}
       <CardModal
         defId={picked}
         onClose={() => setPicked(null)}

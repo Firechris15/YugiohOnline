@@ -7,17 +7,23 @@ import { randomUUID } from 'node:crypto';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { RoomManager, type Conn } from './rooms';
 import { RecordStore } from './store';
+import { CardService } from './cards';
 import { aggregate, type MetaStats } from '../src/engine/meta';
 import metaSim from '../src/data/meta-sim.json';
+import metaRealSim from '../src/data/meta-real.json';
+import type { ImageSize } from '../src/shared/ygo';
 import type { ClientMsg, ServerMsg } from '../src/shared/protocol';
 
 const PORT = Number(process.env.PORT ?? process.env.SERVER_PORT ?? 8787);
 const ROOT = resolve(process.env.DUELFORGE_ROOT ?? process.cwd());
 const DIST = join(ROOT, 'dist');
 const DATA_FILE = process.env.DUELFORGE_DATA ?? join(ROOT, 'data', 'records.json');
+const DATA_DIR = resolve(DATA_FILE, '..');
 
 const store = new RecordStore(DATA_FILE);
-let onlineCache: { at: number; stats: MetaStats } | null = null;
+const cards = new CardService(DATA_DIR);
+void cards.init();
+let onlineCache: { at: number; stats: { demo: MetaStats; real: MetaStats } } | null = null;
 
 const rooms = new RoomManager({
   onRecord: (r) => {
@@ -43,8 +49,14 @@ function json(res: ServerResponse, status: number, body: unknown): void {
   res.end(JSON.stringify(body));
 }
 
-function onlineStats(): MetaStats {
-  if (!onlineCache || Date.now() - onlineCache.at > 30_000) onlineCache = { at: Date.now(), stats: aggregate(store.all(), 'online') };
+function onlineStats(): { demo: MetaStats; real: MetaStats } {
+  if (!onlineCache || Date.now() - onlineCache.at > 30_000) {
+    const all = store.all();
+    onlineCache = {
+      at: Date.now(),
+      stats: { demo: aggregate(all.filter((r) => (r.pool ?? 'demo') === 'demo'), 'online'), real: aggregate(all.filter((r) => r.pool === 'real'), 'online') },
+    };
+  }
   return onlineCache.stats;
 }
 
@@ -76,9 +88,23 @@ const server = createServer((req, res) => {
   const url = req.url ?? '/';
   if (url.startsWith('/api/')) {
     if (url.startsWith('/api/health')) return json(res, 200, { ok: true, online: rooms.onlineCount });
-    if (url.startsWith('/api/meta')) return json(res, 200, { sim: metaSim, online: onlineStats() });
+    if (url.startsWith('/api/meta')) {
+      const online = onlineStats();
+      return json(res, 200, { sim: metaSim, online: online.demo, real: { sim: metaRealSim, online: online.real } });
+    }
     if (url.startsWith('/api/rooms')) return json(res, 200, { rooms: rooms.publicRooms() });
+    if (url.startsWith('/api/cards/status')) {
+      return json(res, 200, { ready: cards.ready, version: cards.version, count: cards.count, source: cards.source, error: cards.lastError });
+    }
+    if (url.startsWith('/api/cards')) return cards.serveCards(req, res);
     return json(res, 404, { error: 'not found' });
+  }
+  const img = /^\/img\/(full|small|cropped)\/(\d{1,10})\.jpg$/.exec(url.split('?')[0]);
+  if (img && req.method === 'GET') {
+    void cards.serveImage(img[1] as ImageSize, Number(img[2]), res).catch(() => {
+      if (!res.headersSent) res.writeHead(502).end();
+    });
+    return;
   }
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.writeHead(405).end();

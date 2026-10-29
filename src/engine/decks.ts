@@ -142,8 +142,16 @@ export interface DeckIssue {
  * - demo:  DuelForge demo cards
  * - auto:  real cards with automated rules (bots, automatic duels), Goat-era banlist
  * - tcg / ocg: free duels with every real card and the current TCG / OCG banlist
+ * - none:  free duels with every real card and no banlist
  */
-export type DeckFormat = 'demo' | 'auto' | 'tcg' | 'ocg';
+export type DeckFormat = 'demo' | 'auto' | 'tcg' | 'ocg' | 'none';
+export type FreeBanlist = 'tcg' | 'ocg' | 'none';
+
+/** Deck format used for a duel mode, card pool and (free duels only) banlist. */
+export function duelFormat(mode: 'auto' | 'free', pool: 'real' | 'demo', banlist: FreeBanlist = 'tcg'): DeckFormat {
+  if (pool === 'demo') return 'demo';
+  return mode === 'auto' ? 'auto' : banlist;
+}
 
 export function cardLimit(d: CardDef, format: DeckFormat): number {
   if (!d.real) return d.limit ?? DECK_RULES.copies;
@@ -253,7 +261,15 @@ export function decodeDeck(code: string): DeckList | null {
 
 // ----------------------------------------------------------- archetype detect
 
+let realDetector: ((deck: DeckList) => string) | null = null;
+
+/** Registered by real/decks.ts (kept as a hook to avoid an import cycle). */
+export function setRealArchetypeDetector(fn: (deck: DeckList) => string): void {
+  realDetector = fn;
+}
+
 export function detectArchetype(deck: DeckList): string {
+  if (realDetector && deckPool(deck) === 'real') return realDetector(deck);
   const counts: Record<string, number> = {};
   for (const id of [...deck.main, ...deck.extra]) {
     if (!hasDef(id)) continue;

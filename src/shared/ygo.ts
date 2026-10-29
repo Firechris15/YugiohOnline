@@ -56,6 +56,8 @@ export interface CardDb {
   version: string;
   updated: number;
   cards: YgoCard[];
+  /** where the data came from (images always come from YGOPRODeck) */
+  source?: 'ygoprodeck' | 'github';
 }
 
 const banValue = (s?: string): BanStatus | undefined => (s === 'Banned' || s === 'Limited' || s === 'Semi-Limited' ? s : undefined);

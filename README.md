@@ -1,24 +1,32 @@
-# DuelForge – Online-Sammelkartenspiel im Browser
+# DuelForge – Yu-Gi-Oh! im Browser
 
-DuelForge ist eine komplette Trading-Card-Game-Webseite im Stil der bekannten Online-Simulatoren:
+DuelForge ist eine komplette Yu-Gi-Oh!-Webseite im Stil der bekannten Online-Simulatoren:
 
-- **Kartenbibliothek:** über 100 Karten mit Filtern, Suche, Sortierung und einer Detailansicht mit Holo- und 3D-Effekt
-- **Deck-Builder:** Drag & Drop, Live-Statistiken (Stufenkurve, Zusammensetzung, Attribute), Testhand, Starthand-Wahrscheinlichkeiten und Deck-Codes zum Teilen
-- **Meta-Statistiken:** Tier-Liste, Siegquoten, Matchup-Matrix, meistgespielte Karten und Duell-Länge, aus einer Bot-Liga (simulierte Duelle) und aus echten Online-Duellen
-- **Duelle gegen Bots:** drei Stufen (Leicht, Normal, Schwer), laufen komplett im Browser und auch offline
-- **Duelle gegen Freunde:** private Räume per Code oder Einladungslink, öffentliche Räume, Schnellsuche, Chat und Emotes, Reconnect, Zeitlimit und Revanche
-- **Animationen:** Karten gleiten zwischen den Zonen, dazu Beschwörungs-Schockwellen, Angriffs-Ausfallschritte, Zerstörungs-Partikel, Schadenszahlen, Aktivierungs-Spotlight, Ketten-Anzeige, VS-Intro mit Münzwurf und Sieg-/Niederlage-Screen
+- **Kartenbibliothek:** alle **14.000+ offiziellen Yu-Gi-Oh!-Karten** mit deutschen und englischen Texten, aktueller TCG-/OCG-Banlist, Filtern (Typ, Attribut, Monstertyp, Archetyp, Stufe/Rang/Link, Banlist, „automatisch spielbar“), Suche und Detailansicht mit Holo- und 3D-Effekt
+- **Deck-Builder:** Drag & Drop, Formate (Automatisch, TCG, OCG, ohne Banlist), Live-Statistiken, Testhand, Starthand-Wahrscheinlichkeiten, Deck-Codes und **YDK-Import/-Export** (YGOPRODeck, EDOPro, Dueling Nexus …)
+- **Meta-Statistiken:** Tier-Liste, Siegquoten, Matchup-Matrix, meistgespielte Karten und Duell-Länge – aus einer Bot-Liga (simulierte Duelle) und aus echten Online-Duellen
+- **Zwei Spielmodi:**
+  - **Automatisches Duell:** Regeln, Ketten und Effekte laufen automatisch – gegen Bots (drei Stufen, auch offline) oder online. Rund 850 klassische Karten (Topf der Gier, Spiegelkraft, Dunkler Magier, Blauäugiger w. Drache, Exodia …) haben automatische Regeln; sechs echte Starterdecks sind spielfertig.
+  - **Freies Duell:** wie am echten Tisch bzw. auf Dueling Book – **jede Karte ist spielbar**. Karten per Drag & Drop oder Menü bewegen, beschwören, setzen, aktivieren, angreifen, Kontrolle übernehmen; LP-Rechner, Münze, Würfel, Spielmarken, Zählmarken, Deck ansehen/mischen, Protokoll und Chat. Solo-Testmodus und online gegen Freunde.
+- **Online gegen Freunde:** private Räume per Code oder Einladungslink, öffentliche Räume, Schnellsuche (getrennt nach Modus/Banlist), Chat und Emotes, Reconnect, Zeitlimit und Revanche
+- **Animationen:** Karten gleiten zwischen den Zonen, Beschwörungs-Schockwellen, Angriffe, Zerstörungs-Partikel, Schadenszahlen, Aktivierungs-Spotlight, Ketten-Anzeige, Münz- und Würfelanimation, VS-Intro und Sieg-/Niederlage-Screen
 - **Synthetisierte Soundeffekte**, Oberfläche auf **Deutsch und Englisch**, einstellbares Animationstempo
+- Zusätzlich gibt es ein eigenes **Demo-Kartenset** (über 100 selbst entworfene Karten), das auch ohne Kartendatenbank funktioniert.
 
-## Regeln & Karten
+## Kartendaten
 
-Das Regelwerk ist an klassische Duell-Kartenspiele angelehnt: 8000 LP, Normal-, Tribut-, Flipp-, Spezial- und Fusionsbeschwörung, Zauber und Fallen (inklusive Schnellzauber und Konterfallen), Ketten, Trigger-Effekte, Kampfschaden und Durchschlagsschaden. Die Regeln stehen auch auf der Seite **/rules**.
+Die echten Karten werden **zur Laufzeit geladen** und nicht im Repository gespeichert:
 
-**Alle Karten, Namen, Texte und Grafiken sind eigene Entwürfe.** Es gibt 8 Archetypen (Glutschwinge, Gezeitenrufer, Eisenpanzer, Düsterschleier, Lumina, Sturmklinge, Dornwild, Astral) plus allgemeine Karten. Die Kartenkunst wird für jede Karte prozedural als SVG erzeugt. Originalkarten, -bilder und -texte bekannter Sammelkartenspiele sind urheberrechtlich geschützt und werden deshalb nicht verwendet.
+1. **YGOPRODeck** (`db.ygoprodeck.com`, englische + deutsche Texte, Banlists) – bevorzugte Quelle.
+2. Falls YGOPRODeck nicht erreichbar ist: die offenen **EDOPro-/YGOPro-Datenbanken** auf GitHub (ProjectIgnis/BabelCDB, mycard/ygopro-database für deutsche Texte, ProjectIgnis/LFLists für Banlists).
+
+Der Server speichert die Daten in `data/cards.json`, aktualisiert sie täglich und liefert sie gepackt unter `/api/cards` aus. Kartenbilder kommen von `images.ygoprodeck.com` und werden vom Server unter `/img/…` zwischengespeichert (YGOPRODeck bittet darum, Bilder nicht direkt zu verlinken). Im Browser wird die Datenbank in IndexedDB gecacht.
+
+Yu-Gi-Oh! sowie alle Kartennamen, -texte und -bilder gehören Konami. DuelForge ist ein inoffizielles, nicht-kommerzielles Fan-Projekt.
 
 ## Schnellstart
 
-Voraussetzung: Node.js ≥ 20
+Voraussetzung: Node.js ≥ 22.13 (für den GitHub-Fallback der Kartendatenbank wird das eingebaute `node:sqlite` genutzt; mit Node 20 funktioniert alles außer diesem Fallback)
 
 ```bash
 npm install
@@ -28,7 +36,7 @@ npm install
 npm run dev
 ```
 
-Danach **http://localhost:5173** öffnen. `npm run dev` startet den Vite-Dev-Server und den Multiplayer-Server (Port 8787) gleichzeitig.
+Danach **http://localhost:5173** öffnen. `npm run dev` startet den Vite-Dev-Server und den Server (Port 8787) gleichzeitig. Beim ersten Start lädt der Server die Kartendatenbank (ca. 15–30 Sekunden).
 
 ### Produktion
 
@@ -40,7 +48,7 @@ npm run build
 npm start
 ```
 
-Der Server liefert Webseite, API und WebSocket unter **http://localhost:8787** aus (Port über `PORT` änderbar). Online-Ergebnisse speichert er in `data/records.json` (Pfad über `DUELFORGE_DATA` änderbar).
+Der Server liefert Webseite, API, Kartendaten, Bilder und WebSocket unter **http://localhost:8787** aus (Port über `PORT` änderbar). Online-Ergebnisse speichert er in `data/records.json` (Pfad über `DUELFORGE_DATA` änderbar), die Kartendatenbank und Bilder im selben Ordner.
 
 ### Docker
 
@@ -55,7 +63,7 @@ docker run -p 8787:8787 -v duelforge-data:/app/data duelforge
 ## Hosting
 
 - **Komplett (mit Online-Duellen):** auf jedem Node-Host mit WebSocket-Unterstützung, z. B. Render, Railway, Fly.io oder einem eigenen VPS (Docker-Image oder `npm run build && npm start`).
-- **Nur statisch (ohne Server):** `dist/` kann auf GitHub Pages, Netlify usw. liegen. Bot-Duelle, Bibliothek, Deck-Builder und Bot-Liga-Meta funktionieren dann, Online-Duelle nicht.
+- **Nur statisch (ohne Server):** `npm run cards && npm run build:static` erzeugt `dist-static/` inklusive gepackter Kartendatenbank. Bibliothek, Deck-Builder, Bot-Duelle, Solo-Testmodus und Bot-Liga-Meta funktionieren dann, Online-Duelle nicht. Kartenbilder kommen dabei direkt von YGOPRODeck.
 - **Getrennter Server:** Liegt der Server auf einer anderen Domain, beim Build `VITE_SERVER_URL=https://dein-server.example` setzen.
 
 ## Nützliche Befehle
@@ -64,7 +72,10 @@ docker run -p 8787:8787 -v duelforge-data:/app/data duelforge
 | --- | --- |
 | `npm test` | Engine- und Server-Tests (inklusive Fuzzing mit hunderten Zufallspartien) |
 | `npm run typecheck` | TypeScript-Prüfung |
-| `npm run simulate -- 40` | Bot-Liga neu simulieren und `src/data/meta-sim.json` erzeugen (40 Duelle pro Paarung) |
+| `npm run cards` | Kartendatenbank nach `data/cards.json` laden |
+| `npm run simulate:real -- 40` | Bot-Liga mit den echten Starterdecks → `src/data/meta-real.json` |
+| `npm run simulate -- 40` | Bot-Liga mit dem Demo-Set → `src/data/meta-sim.json` |
+| `npm run build:static` | Server-lose Version in `dist-static/` |
 | `npx tsx scripts/bench-bots.ts easy hard 40` | Bot-Stufen gegeneinander testen |
 | `npx tsx scripts/ws-smoke.ts ws://localhost:8787/ws` | Komplettes Online-Duell gegen einen laufenden Server |
 
@@ -72,30 +83,30 @@ docker run -p 8787:8787 -v duelforge-data:/app/data duelforge
 
 ```
 src/engine/        Regel-Engine (reines TypeScript, läuft im Browser und auf dem Server)
-  cards/           Kartendefinitionen (eigene Karten, zweisprachig)
+  real/            echte Karten: Abbildung auf die Engine, automatische Regeln, Starterdecks
+  sandbox.ts       Engine für freie Duelle (Zonen, verdeckte Infos, LP, Züge, Protokoll)
+  cards/           Demo-Kartenset (eigene Karten, zweisprachig)
   ai/bot.ts        Bots (simulationsbasiert, ohne Blick auf verdeckte Karten)
-  decks.ts         Starterdecks, Deck-Validierung, Deck-Codes
+  decks.ts         Formate, Banlists, Deck-Validierung, Deck-Codes
   meta.ts          Aggregation der Meta-Statistiken
-src/web/           React-Frontend (Seiten, Duell-Brett, Animationen, Kartenkunst)
-src/shared/        WebSocket-Protokoll
-server/            Node-Server: Räume, Schnellsuche, Statistik-API
-scripts/           Bot-Liga-Simulation, Benchmarks, Build-Skript
+src/web/           React-Frontend (Seiten, Duell-Bretter, Animationen)
+src/shared/        WebSocket-Protokoll, YGOPRODeck- und EDOPro-Datenformate
+server/            Node-Server: Räume (beide Modi), Schnellsuche, Kartendaten, Bild-Cache, Statistik-API
+scripts/           Bot-Ligen, Kartendaten-Download, Benchmarks, Build-Skripte
 ```
 
-## Eigene Karten hinzufügen
+## Weitere Karten automatisieren
 
-Karten werden deklarativ in `src/engine/cards/*.ts` beschrieben, zum Beispiel:
+Automatische Regeln für echte Karten stehen in `src/engine/real/effects.ts`, zugeordnet über den englischen Kartennamen:
 
 ```ts
-spell('MY-001', ['Arcane Insight', 'Arkane Einsicht'], 'normal',
-  ['Draw 2 cards.', 'Ziehe 2 Karten.'],
-  [{ kind: 'activate', ops: [{ op: 'draw', who: 'self', n: 2 }] }]);
+'Pot of Greed': { effects: [{ kind: 'activate', ops: [{ op: 'draw', who: 'self', n: 2 }] }] },
 ```
 
-Effekte setzen sich aus Bausteinen zusammen: Ziehen, Schaden, LP, Zerstören, Verbannen, Suchen, Spezialbeschwörung, Spielmarken, ATK-Änderungen, Annullieren, Fusion und weitere. Für Sonderfälle gibt es `custom`. Die Bots können neue Karten automatisch spielen, weil sie Züge simulieren.
+Effekte setzen sich aus Bausteinen zusammen: Ziehen, Schaden, LP, Zerstören, Verbannen, Suchen, Spezialbeschwörung, Spielmarken, ATK-Änderungen, Kontrolle übernehmen, Annullieren, Fusion, Ritual und weitere. Normale Monster, einfache Fusionen und Rituale werden automatisch erkannt. Die Bots können neue Karten sofort spielen, weil sie Züge simulieren.
 
 Den Seitennamen änderst du in `src/web/config.ts`.
 
 ---
 
-*DuelForge is an independent fan project with original cards, names and artwork. It is not affiliated with any trading card game publisher.*
+*DuelForge is an unofficial, non-commercial fan project and is not affiliated with Konami. Yu-Gi-Oh! and all card names, texts and images belong to Konami.*

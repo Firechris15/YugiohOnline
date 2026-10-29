@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ARCHETYPE_BY_ID, STARTER_DECKS, getDef, hasDef, sortDeckIds } from '../../engine';
+import { ARCHETYPE_BY_ID, REAL_STARTER_BY_ID, STARTER_DECKS, getDef, hasDef, realStarterCover, resolveRealStarter, sortDeckIds, type DeckFormat, type DeckList } from '../../engine';
 import type { MetaStats } from '../../engine/meta';
 import metaSim from '../../data/meta-sim.json';
+import metaReal from '../../data/meta-real.json';
+import { archetypeInfo } from '../lib/cards';
+import { useCardPool, useCardDb } from '../lib/carddb';
+import { CardDbNotice, PoolSwitch } from '../components/PoolSwitch';
 import { useT } from '../i18n';
 import { apiUrl } from '../lib/net';
 import { IS_STATIC } from '../config';
@@ -17,6 +21,7 @@ import { toast } from '../store/ui';
 import '../styles/meta.css';
 
 const SIM = metaSim as MetaStats;
+const SIM_REAL = metaReal as MetaStats;
 const BOSS: Record<string, string> = {
   emberwing: 'EMB-005',
   tidecaller: 'TID-F01',
@@ -31,17 +36,37 @@ const BOSS: Record<string, string> = {
 const pct = (v: number, d = 1) => `${(v * 100).toFixed(d)}%`;
 
 function ArchDot({ id }: { id: string }) {
-  return <i className="arch-dot" style={{ background: ARCHETYPE_BY_ID[id]?.color ?? '#888' }} />;
+  return <i className="arch-dot" style={{ background: archetypeInfo(id, 'en').color }} />;
+}
+
+/** Signature card shown next to an archetype. */
+function bossCard(id: string): string | undefined {
+  if (BOSS[id]) return BOSS[id];
+  const s = REAL_STARTER_BY_ID[id];
+  const cover = s ? realStarterCover(s) : null;
+  return cover && hasDef(cover) ? cover : undefined;
+}
+
+/** Ready-made deck list for an archetype (demo starter or real starter). */
+function starterFor(id: string, lang: 'de' | 'en'): { name: string; deck: DeckList; format: DeckFormat } | undefined {
+  const demo = STARTER_DECKS.find((s) => s.archetype === id);
+  if (demo) return { name: demo.name[lang], deck: demo.deck, format: 'demo' };
+  const real = REAL_STARTER_BY_ID[id];
+  const deck = real ? resolveRealStarter(real) : null;
+  return real && deck ? { name: real.name[lang], deck, format: 'auto' } : undefined;
 }
 
 export default function MetaPage() {
   const t = useT();
   const nav = useNavigate();
   const create = useDecks((s) => s.create);
+  const { pool } = useCardPool();
+  const dbVersion = useCardDb((s) => s.version); // card names appear once the real database is loaded
   const [source, setSource] = useState<'sim' | 'online'>('sim');
-  const [online, setOnline] = useState<MetaStats | null>(null);
+  const [remote, setRemote] = useState<{ sim: MetaStats; online: MetaStats; real?: { sim: MetaStats; online: MetaStats } } | null>(null);
   const [serverDown, setServerDown] = useState(false);
-  const [sim, setSim] = useState<MetaStats>(SIM);
+  const sim = pool === 'real' ? (remote?.real?.sim ?? SIM_REAL) : (remote?.sim ?? SIM);
+  const online = (pool === 'real' ? remote?.real?.online : remote?.online) ?? null;
   const [arch, setArch] = useState<string | null>(null);
   const [card, setCard] = useState<string | null>(null);
   const [cardSort, setCardSort] = useState<'inclusion' | 'winRate' | 'played'>('inclusion');
@@ -51,27 +76,25 @@ export default function MetaPage() {
     if (IS_STATIC) return;
     fetch(apiUrl('/api/meta'))
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then((j: { sim: MetaStats; online: MetaStats }) => {
-        setSim(j.sim);
-        setOnline(j.online);
-      })
+      .then((j: { sim: MetaStats; online: MetaStats; real?: { sim: MetaStats; online: MetaStats } }) => setRemote(j))
       .catch(() => setServerDown(true));
   }, []);
 
   const data = source === 'online' && online && online.games > 0 ? online : source === 'sim' ? sim : null;
-  const name = (id: string) => ARCHETYPE_BY_ID[id]?.name[t.lang] ?? (id === 'mixed' ? 'Mixed' : id);
+  const name = (id: string) => archetypeInfo(id, t.lang).name;
   const archetypes = data?.archetypes ?? [];
   const order = archetypes.map((a) => a.id);
   const cards = useMemo(() => {
     if (!data) return [];
     return [...data.cards].filter((c) => hasDef(c.id) && c.games >= 5).sort((a, b) => b[cardSort] - a[cardSort]).slice(0, 20);
-  }, [data, cardSort]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, cardSort, dbVersion]);
   const top = archetypes[0];
   const date = data ? new Date(data.generatedAt).toLocaleDateString(t.lang === 'de' ? 'de-DE' : 'en-GB') : '';
 
   const tiers = (['S', 'A', 'B', 'C'] as const).map((tier) => ({ tier, items: archetypes.filter((a) => a.tier === tier) }));
   const detail = arch ? archetypes.find((a) => a.id === arch) : undefined;
-  const starter = arch ? STARTER_DECKS.find((s) => s.archetype === arch) : undefined;
+  const starter = arch ? starterFor(arch, t.lang) : undefined;
   const matchupsOf = (id: string) =>
     Object.entries(data?.matchups[id] ?? {})
       .filter(([, m]) => m.games >= 4)
@@ -86,6 +109,8 @@ export default function MetaPage() {
           <h1>{t('meta.title')}</h1>
           <p>{t('meta.lead')}</p>
         </div>
+        <div className="row row-wrap">
+        <PoolSwitch />
         {!IS_STATIC && (
           <Tabs
             id="meta-src"
@@ -97,13 +122,15 @@ export default function MetaPage() {
             ]}
           />
         )}
+        </div>
       </div>
+      <CardDbNotice />
 
       {serverDown && source === 'online' && <div className="panel panel-pad muted" style={{ marginBottom: 20 }}>{t('meta.serverOffline')}</div>}
       {!data ? (
         <div className="panel empty">{t('meta.noOnline')}</div>
       ) : (
-        <motion.div key={source} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="meta">
+        <motion.div key={`${source}-${pool}`} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="meta">
           <div className="grid-4 meta-kpis">
             <StatTile label={t('meta.games')} value={data.games.toLocaleString()} />
             <StatTile label={t('meta.avgTurns')} value={data.avgTurns.toFixed(1)} />
@@ -139,14 +166,14 @@ export default function MetaPage() {
                       <motion.button
                         key={a.id}
                         className="tier-item"
-                        style={{ ['--c' as string]: ARCHETYPE_BY_ID[a.id]?.color ?? '#888' }}
+                        style={{ ['--c' as string]: archetypeInfo(a.id, t.lang).color }}
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.05 }}
                         whileHover={{ y: -4 }}
                         onClick={() => setArch(a.id)}
                       >
-                        {BOSS[a.id] && <Card defId={BOSS[a.id]} size="xs" />}
+                        {bossCard(a.id) && <Card defId={bossCard(a.id)!} size="xs" />}
                         <span>
                           <b>{name(a.id)}</b>
                           <small>{pct(a.winRate)}</small>
@@ -324,7 +351,7 @@ export default function MetaPage() {
                         <span>
                           <b>{getDef(c.id).name[t.lang]}</b>
                           <br />
-                          <small className="faint">{getDef(c.id).archetype ? name(getDef(c.id).archetype!) : t('lib.generic')}</small>
+                          <small className="faint">{getDef(c.id).archetype ? name(getDef(c.id).archetype!) : getDef(c.id).real ? getDef(c.id).typeLine?.[t.lang] ?? '' : t('lib.generic')}</small>
                         </span>
                       </span>
                     </td>
@@ -347,16 +374,16 @@ export default function MetaPage() {
 
       <Modal open={!!detail} onClose={() => setArch(null)} wide>
         {detail && (
-          <div className="arch-detail" style={{ ['--c' as string]: ARCHETYPE_BY_ID[detail.id]?.color }}>
+          <div className="arch-detail" style={{ ['--c' as string]: archetypeInfo(detail.id, t.lang).color }}>
             <div className="arch-detail-head">
-              {BOSS[detail.id] && <Card defId={BOSS[detail.id]} size="md" holo />}
+              {bossCard(detail.id) && <Card defId={bossCard(detail.id)!} size="md" holo />}
               <div>
                 <span className="eyebrow" style={{ color: 'var(--c)' }}>
                   Tier {detail.tier}
                 </span>
                 <h2 style={{ margin: '4px 0 6px' }}>{name(detail.id)}</h2>
                 <p className="muted" style={{ margin: 0 }}>
-                  {ARCHETYPE_BY_ID[detail.id]?.description[t.lang]}
+                  {REAL_STARTER_BY_ID[detail.id]?.description[t.lang] ?? ARCHETYPE_BY_ID[detail.id]?.description[t.lang]}
                 </p>
                 <div className="row row-wrap" style={{ marginTop: 12, gap: 18 }}>
                   <span>
@@ -406,13 +433,13 @@ export default function MetaPage() {
               <>
                 <div className="row" style={{ marginTop: 20 }}>
                   <h4 style={{ margin: 0 }}>
-                    {t('meta.decklist')} – {starter.name[t.lang]}
+                    {t('meta.decklist')} – {starter.name}
                   </h4>
                   <span className="spacer" />
                   <button
                     className="btn btn-primary btn-sm"
                     onClick={() => {
-                      const d = create(starter.name[t.lang], starter.deck);
+                      const d = create(starter.name, starter.deck, starter.format);
                       toast(t('decks.importOk'), 'success');
                       nav(`/decks/${d.id}`);
                     }}

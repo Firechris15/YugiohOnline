@@ -1,7 +1,7 @@
 // Aggregation of finished games into meta statistics (used by the
 // simulation script, the server and the client).
 import { getDef, hasDef } from './db';
-import type { GameState, PlayerId } from './types';
+import type { PlayerId } from './types';
 
 export interface GameRecord {
   archetypes: [string, string];
@@ -13,6 +13,8 @@ export interface GameRecord {
   played: [Record<string, number>, Record<string, number>];
   mode: 'sim' | 'online' | 'bot';
   at: number;
+  pool?: 'real' | 'demo';
+  format?: 'auto' | 'free';
 }
 
 export interface ArchetypeStat {
@@ -56,10 +58,10 @@ export function countIds(ids: string[]): Record<string, number> {
 }
 
 /** Count summons and activations per player from a finished game's event log. */
-export function playedCards(g: GameState): [Record<string, number>, Record<string, number>] {
+export function playedCards(g: { events: { type: string; defId?: string | null; player?: PlayerId }[] }): [Record<string, number>, Record<string, number>] {
   const out: [Record<string, number>, Record<string, number>] = [{}, {}];
   for (const e of g.events) {
-    if ((e.type === 'summon' || e.type === 'activate') && e.defId && e.player !== undefined && hasDef(e.defId)) {
+    if ((e.type === 'summon' || e.type === 'activate' || e.type === 'play') && e.defId && e.player !== undefined && hasDef(e.defId)) {
       if (getDef(e.defId).token) continue;
       out[e.player][e.defId] = (out[e.player][e.defId] ?? 0) + 1;
     }

@@ -394,3 +394,82 @@
   height: 100%;
   display: block;
 }
+
+/* ---------------------------------------------------- real card images */
+
+.card-real .card-frame {
+  padding: 0;
+  background: #10131f;
+}
+
+.card-real .card-frame::before {
+  display: none;
+}
+
+.card-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
+}
+
+.card-real .card-frame::after {
+  /* shimmer while the image loads */
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(110deg, #141829 30%, #222844 50%, #141829 70%);
+  background-size: 200% 100%;
+  animation: card-shimmer 1.4s linear infinite;
+}
+
+@keyframes card-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.card-real-stats {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  bottom: 3%;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 4%;
+  font-size: max(9px, 13cqi);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.card-real-stats .card-stat {
+  padding: 1px 5%;
+  border-radius: 4px;
+  background: rgba(5, 6, 15, 0.85);
+  color: #ffd27a;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.card-real-stats .card-stat.def {
+  color: #9fd3ff;
+}
+
+.card-real-stats .card-stat.up {
+  color: #6dffb0;
+}
+
+.card-real-stats .card-stat.down {
+  color: #ff7a8a;
+}
+
+.card-limit.banned {
+  background: #2b0b12;
+  box-shadow:
+    0 0 0 2px var(--danger),
+    0 2px 6px rgba(0, 0, 0, 0.5);
+}

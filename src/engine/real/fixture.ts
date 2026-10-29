@@ -1,0 +1,160 @@
+// Test fixture in the YGOPRODeck API format. Only names and rough stats of
+// the cards used by the starter decks and curated rules; the texts are
+// placeholders (real texts are loaded from the card database at runtime).
+import type { ApiCard } from '../../shared/ygo';
+
+type M = [name: string, frame: string, race: string, attr: string, level: number, atk: number, def: number, materials?: string];
+type S = [name: string, frame: 'spell' | 'trap', subtype: string];
+
+const MONSTERS: M[] = [
+  ['Blue-Eyes White Dragon', 'normal', 'Dragon', 'LIGHT', 8, 3000, 2500],
+  ['Dark Magician', 'normal', 'Spellcaster', 'DARK', 7, 2500, 2100],
+  ['Red-Eyes Black Dragon', 'normal', 'Dragon', 'DARK', 7, 2400, 2000],
+  ['Summoned Skull', 'normal', 'Fiend', 'DARK', 6, 2500, 1200],
+  ['Celtic Guardian', 'normal', 'Warrior', 'EARTH', 4, 1400, 1200],
+  ['Gaia The Fierce Knight', 'normal', 'Warrior', 'EARTH', 7, 2300, 2100],
+  ['Curse of Dragon', 'normal', 'Dragon', 'DARK', 5, 2000, 1500],
+  ['Giant Soldier of Stone', 'normal', 'Rock', 'EARTH', 3, 1300, 2000],
+  ['Mystical Elf', 'normal', 'Spellcaster', 'LIGHT', 4, 800, 2000],
+  ['Feral Imp', 'normal', 'Fiend', 'DARK', 4, 1300, 1400],
+  ['Beaver Warrior', 'normal', 'Beast-Warrior', 'EARTH', 4, 1200, 1500],
+  ['La Jinn the Mystical Genie of the Lamp', 'normal', 'Fiend', 'DARK', 4, 1800, 1000],
+  ['Battle Ox', 'normal', 'Beast-Warrior', 'EARTH', 4, 1700, 1000],
+  ['Luster Dragon', 'normal', 'Dragon', 'WIND', 4, 1900, 1600],
+  ['Alexandrite Dragon', 'normal', 'Dragon', 'LIGHT', 4, 2000, 100],
+  ['Vorse Raider', 'normal', 'Beast-Warrior', 'DARK', 4, 1900, 1200],
+  ['Mad Dog of Darkness', 'normal', 'Beast', 'DARK', 4, 1900, 1400],
+  ['Gemini Elf', 'normal', 'Spellcaster', 'EARTH', 4, 1900, 900],
+  ['Neo the Magic Swordsman', 'normal', 'Spellcaster', 'LIGHT', 4, 1700, 1000],
+  ['Mystic Horseman', 'normal', 'Beast', 'EARTH', 4, 1300, 1550],
+  ['Ancient Elf', 'normal', 'Spellcaster', 'LIGHT', 4, 1450, 1200],
+  ['Axe Raider', 'normal', 'Warrior', 'EARTH', 4, 1700, 1150],
+  ['Dark Blade', 'normal', 'Warrior', 'DARK', 4, 1800, 1500],
+  ['Flame Manipulator', 'normal', 'Spellcaster', 'FIRE', 3, 900, 1000],
+  ['Masaki the Legendary Swordsman', 'normal', 'Warrior', 'EARTH', 4, 1100, 1100],
+  ['Hitotsu-Me Giant', 'normal', 'Beast-Warrior', 'EARTH', 4, 1200, 1000],
+  ['Right Arm of the Forbidden One', 'normal', 'Spellcaster', 'DARK', 1, 200, 300],
+  ['Left Arm of the Forbidden One', 'normal', 'Spellcaster', 'DARK', 1, 200, 300],
+  ['Right Leg of the Forbidden One', 'normal', 'Spellcaster', 'DARK', 1, 200, 300],
+  ['Left Leg of the Forbidden One', 'normal', 'Spellcaster', 'DARK', 1, 200, 300],
+  ['Magician of Black Chaos', 'ritual', 'Spellcaster', 'DARK', 8, 2800, 2600],
+  ['Black Luster Soldier', 'ritual', 'Warrior', 'EARTH', 8, 3000, 2500],
+  ['Exodia the Forbidden One', 'effect', 'Spellcaster', 'DARK', 3, 1000, 1000],
+  ['Dark Magician Girl', 'effect', 'Spellcaster', 'DARK', 6, 2000, 1700],
+  ['Magician of Faith', 'effect', 'Spellcaster', 'LIGHT', 1, 300, 400],
+  ['Old Vindictive Magician', 'effect', 'Spellcaster', 'DARK', 2, 450, 600],
+  ['Kaibaman', 'effect', 'Warrior', 'LIGHT', 3, 200, 700],
+  ['Sangan', 'effect', 'Fiend', 'DARK', 3, 1000, 600],
+  ['Witch of the Black Forest', 'effect', 'Spellcaster', 'DARK', 4, 1100, 1200],
+  ['Cyber Dragon', 'effect', 'Machine', 'LIGHT', 5, 2100, 1600],
+  ['Hayabusa Knight', 'effect', 'Warrior', 'EARTH', 3, 1000, 700],
+  ['Gyaku-Gire Panda', 'effect', 'Beast', 'EARTH', 3, 800, 1600],
+  ['Command Knight', 'effect', 'Warrior', 'FIRE', 4, 1200, 1900],
+  ['Marauding Captain', 'effect', 'Warrior', 'EARTH', 3, 1200, 400],
+  ['Exiled Force', 'effect', 'Warrior', 'EARTH', 4, 1000, 1000],
+  ['Blade Knight', 'effect', 'Warrior', 'LIGHT', 4, 1600, 1000],
+  ['Zaborg the Thunder Monarch', 'effect', 'Thunder', 'LIGHT', 5, 2400, 1000],
+  ['Mobius the Frost Monarch', 'effect', 'Aqua', 'WATER', 6, 2400, 1000],
+  ['Raiza the Storm Monarch', 'effect', 'Winged Beast', 'WIND', 6, 2400, 1000],
+  ['Granmarg the Rock Monarch', 'effect', 'Rock', 'EARTH', 6, 2400, 1000],
+  ['Mystic Tomato', 'effect', 'Plant', 'DARK', 4, 1400, 1100],
+  ['Giant Rat', 'effect', 'Beast', 'EARTH', 4, 1400, 1450],
+  ['Man-Eater Bug', 'effect', 'Insect', 'EARTH', 2, 450, 600],
+  ['Hane-Hane', 'effect', 'Beast', 'EARTH', 2, 450, 500],
+  ['Morphing Jar', 'effect', 'Rock', 'EARTH', 2, 700, 600],
+  ['Dekoichi the Battlechanted Locomotive', 'effect', 'Machine', 'DARK', 4, 1400, 1000],
+  ['Penguin Soldier', 'effect', 'Aqua', 'WATER', 2, 750, 500],
+  ['Time Wizard', 'effect', 'Spellcaster', 'LIGHT', 2, 500, 400],
+  ['Blue-Eyes Ultimate Dragon', 'fusion', 'Dragon', 'LIGHT', 12, 4500, 3800, '"Blue-Eyes White Dragon" + "Blue-Eyes White Dragon" + "Blue-Eyes White Dragon"'],
+  ['Rabid Horseman', 'fusion', 'Beast-Warrior', 'EARTH', 6, 2000, 1700, '"Battle Ox" + "Mystic Horseman"'],
+  ['Black Skull Dragon', 'fusion', 'Dragon', 'DARK', 9, 3200, 2500, '"Summoned Skull" + "Red-Eyes Black Dragon"'],
+  ['Flame Swordsman', 'fusion', 'Warrior', 'FIRE', 5, 1800, 1600, '"Flame Manipulator" + "Masaki the Legendary Swordsman"'],
+  ['Gaia the Dragon Champion', 'fusion', 'Dragon', 'WIND', 7, 2600, 2100, '"Gaia The Fierce Knight" + "Curse of Dragon"'],
+  ['Sheep Token', 'token', 'Beast', 'EARTH', 1, 0, 0],
+];
+
+const SPELLS_TRAPS: S[] = [
+  ['Pot of Greed', 'spell', 'Normal'],
+  ['Graceful Charity', 'spell', 'Normal'],
+  ['Monster Reborn', 'spell', 'Normal'],
+  ['Dark Hole', 'spell', 'Normal'],
+  ['Raigeki', 'spell', 'Normal'],
+  ['Heavy Storm', 'spell', 'Normal'],
+  ['Change of Heart', 'spell', 'Normal'],
+  ['Brain Control', 'spell', 'Normal'],
+  ['Polymerization', 'spell', 'Normal'],
+  ['Fissure', 'spell', 'Normal'],
+  ['Smashing Ground', 'spell', 'Normal'],
+  ['Nobleman of Crossout', 'spell', 'Normal'],
+  ['Upstart Goblin', 'spell', 'Normal'],
+  ['Card Destruction', 'spell', 'Normal'],
+  ['Ookazi', 'spell', 'Normal'],
+  ['Dian Keto the Cure Master', 'spell', 'Normal'],
+  ['Red Medicine', 'spell', 'Normal'],
+  ['Reinforcement of the Army', 'spell', 'Normal'],
+  ['Swords of Revealing Light', 'spell', 'Normal'],
+  ['Mystical Space Typhoon', 'spell', 'Quick-Play'],
+  ['Scapegoat', 'spell', 'Quick-Play'],
+  ['Shrink', 'spell', 'Quick-Play'],
+  ['Rush Recklessly', 'spell', 'Quick-Play'],
+  ['Book of Secret Arts', 'spell', 'Equip'],
+  ['Dragon Treasure', 'spell', 'Equip'],
+  ['Axe of Despair', 'spell', 'Equip'],
+  ['Legendary Sword', 'spell', 'Equip'],
+  ['Yami', 'spell', 'Field'],
+  ['Mountain', 'spell', 'Field'],
+  ['Sogen', 'spell', 'Field'],
+  ['Black Magic Ritual', 'spell', 'Ritual'],
+  ['Mirror Force', 'trap', 'Normal'],
+  ['Magic Cylinder', 'trap', 'Normal'],
+  ['Trap Hole', 'trap', 'Normal'],
+  ['Bottomless Trap Hole', 'trap', 'Normal'],
+  ['Torrential Tribute', 'trap', 'Normal'],
+  ['Sakuretsu Armor', 'trap', 'Normal'],
+  ['Dust Tornado', 'trap', 'Normal'],
+  ['Reinforcements', 'trap', 'Normal'],
+  ['Widespread Ruin', 'trap', 'Normal'],
+  ['Dimensional Prison', 'trap', 'Normal'],
+  ['Compulsory Evacuation Device', 'trap', 'Normal'],
+  ['Castle Walls', 'trap', 'Normal'],
+  ['Negate Attack', 'trap', 'Counter'],
+  ['Seven Tools of the Bandit', 'trap', 'Counter'],
+  ['Magic Jammer', 'trap', 'Counter'],
+];
+
+const LIMITED_GOAT = new Set(['Pot of Greed', 'Graceful Charity', 'Monster Reborn', 'Dark Hole', 'Raigeki', 'Heavy Storm', 'Change of Heart', 'Mirror Force', 'Torrential Tribute', 'Sangan', 'Witch of the Black Forest', 'Morphing Jar']);
+
+export function fixtureCards(): ApiCard[] {
+  let id = 100000;
+  const out: ApiCard[] = [];
+  for (const [name, frame, race, attr, level, atk, def, materials] of MONSTERS) {
+    const type = frame === 'normal' ? 'Normal Monster' : frame === 'effect' ? 'Effect Monster' : frame === 'ritual' ? 'Ritual Monster' : frame === 'token' ? 'Token' : 'Fusion Monster';
+    const typeline = frame === 'effect' ? [race, 'Effect'] : frame === 'normal' ? [race, 'Normal'] : frame === 'token' ? undefined : [race, frame === 'ritual' ? 'Ritual' : 'Fusion'];
+    out.push({
+      id: ++id,
+      name,
+      type,
+      frameType: frame,
+      desc: materials ?? `(placeholder text for ${name})`,
+      race,
+      attribute: attr,
+      level,
+      atk,
+      def,
+      typeline,
+      banlist_info: LIMITED_GOAT.has(name) ? { ban_goat: 'Limited' } : undefined,
+    });
+  }
+  for (const [name, frame, subtype] of SPELLS_TRAPS) {
+    out.push({
+      id: ++id,
+      name,
+      type: frame === 'spell' ? 'Spell Card' : 'Trap Card',
+      frameType: frame,
+      desc: `(placeholder text for ${name})`,
+      race: subtype,
+      banlist_info: LIMITED_GOAT.has(name) ? { ban_goat: 'Limited', ban_tcg: name === 'Pot of Greed' ? 'Banned' : undefined } : undefined,
+    });
+  }
+  return out;
+}

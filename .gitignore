@@ -1,0 +1,9 @@
+node_modules
+dist
+dist-server
+data/*.json
+!data/.gitkeep
+*.log
+.DS_Store
+test-results
+dist-static

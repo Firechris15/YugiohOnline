@@ -1,0 +1,1258 @@
+{
+ "generatedAt": 1793233757391,
+ "source": "sim",
+ "games": 1120,
+ "firstPlayerWinRate": 0.45535714285714285,
+ "avgTurns": 13.175,
+ "archetypes": [
+  {
+   "id": "astral",
+   "games": 280,
+   "wins": 168,
+   "winRate": 0.6,
+   "firstGames": 140,
+   "firstWins": 78,
+   "share": 0.125,
+   "avgTurns": 11.785714285714286,
+   "tier": "S"
+  },
+  {
+   "id": "ironclad",
+   "games": 280,
+   "wins": 159,
+   "winRate": 0.5678571428571428,
+   "firstGames": 140,
+   "firstWins": 76,
+   "share": 0.125,
+   "avgTurns": 13.517857142857142,
+   "tier": "S"
+  },
+  {
+   "id": "lumina",
+   "games": 280,
+   "wins": 156,
+   "winRate": 0.5571428571428572,
+   "firstGames": 140,
+   "firstWins": 73,
+   "share": 0.125,
+   "avgTurns": 14.775,
+   "tier": "A"
+  },
+  {
+   "id": "tidecaller",
+   "games": 280,
+   "wins": 144,
+   "winRate": 0.5142857142857142,
+   "firstGames": 140,
+   "firstWins": 65,
+   "share": 0.125,
+   "avgTurns": 11.967857142857143,
+   "tier": "A"
+  },
+  {
+   "id": "gloomveil",
+   "games": 280,
+   "wins": 144,
+   "winRate": 0.5142857142857142,
+   "firstGames": 140,
+   "firstWins": 72,
+   "share": 0.125,
+   "avgTurns": 13.996428571428572,
+   "tier": "A"
+  },
+  {
+   "id": "thornwild",
+   "games": 280,
+   "wins": 123,
+   "winRate": 0.4392857142857143,
+   "firstGames": 140,
+   "firstWins": 56,
+   "share": 0.125,
+   "avgTurns": 14.932142857142857,
+   "tier": "C"
+  },
+  {
+   "id": "emberwing",
+   "games": 280,
+   "wins": 115,
+   "winRate": 0.4107142857142857,
+   "firstGames": 140,
+   "firstWins": 47,
+   "share": 0.125,
+   "avgTurns": 12.385714285714286,
+   "tier": "C"
+  },
+  {
+   "id": "galeblade",
+   "games": 280,
+   "wins": 111,
+   "winRate": 0.3964285714285714,
+   "firstGames": 140,
+   "firstWins": 43,
+   "share": 0.125,
+   "avgTurns": 12.039285714285715,
+   "tier": "C"
+  }
+ ],
+ "matchups": {
+  "emberwing": {
+   "tidecaller": {
+    "games": 40,
+    "wins": 15
+   },
+   "ironclad": {
+    "games": 40,
+    "wins": 19
+   },
+   "gloomveil": {
+    "games": 40,
+    "wins": 12
+   },
+   "lumina": {
+    "games": 40,
+    "wins": 11
+   },
+   "galeblade": {
+    "games": 40,
+    "wins": 23
+   },
+   "thornwild": {
+    "games": 40,
+    "wins": 21
+   },
+   "astral": {
+    "games": 40,
+    "wins": 14
+   }
+  },
+  "tidecaller": {
+   "emberwing": {
+    "games": 40,
+    "wins": 25
+   },
+   "ironclad": {
+    "games": 40,
+    "wins": 16
+   },
+   "gloomveil": {
+    "games": 40,
+    "wins": 21
+   },
+   "lumina": {
+    "games": 40,
+    "wins": 14
+   },
+   "galeblade": {
+    "games": 40,
+    "wins": 23
+   },
+   "thornwild": {
+    "games": 40,
+    "wins": 24
+   },
+   "astral": {
+    "games": 40,
+    "wins": 21
+   }
+  },
+  "ironclad": {
+   "emberwing": {
+    "games": 40,
+    "wins": 21
+   },
+   "tidecaller": {
+    "games": 40,
+    "wins": 24
+   },
+   "gloomveil": {
+    "games": 40,
+    "wins": 24
+   },
+   "lumina": {
+    "games": 40,
+    "wins": 25
+   },
+   "galeblade": {
+    "games": 40,
+    "wins": 22
+   },
+   "thornwild": {
+    "games": 40,
+    "wins": 28
+   },
+   "astral": {
+    "games": 40,
+    "wins": 15
+   }
+  },
+  "gloomveil": {
+   "emberwing": {
+    "games": 40,
+    "wins": 28
+   },
+   "tidecaller": {
+    "games": 40,
+    "wins": 19
+   },
+   "ironclad": {
+    "games": 40,
+    "wins": 16
+   },
+   "lumina": {
+    "games": 40,
+    "wins": 20
+   },
+   "galeblade": {
+    "games": 40,
+    "wins": 23
+   },
+   "thornwild": {
+    "games": 40,
+    "wins": 24
+   },
+   "astral": {
+    "games": 40,
+    "wins": 14
+   }
+  },
+  "lumina": {
+   "emberwing": {
+    "games": 40,
+    "wins": 29
+   },
+   "tidecaller": {
+    "games": 40,
+    "wins": 26
+   },
+   "ironclad": {
+    "games": 40,
+    "wins": 15
+   },
+   "gloomveil": {
+    "games": 40,
+    "wins": 20
+   },
+   "galeblade": {
+    "games": 40,
+    "wins": 25
+   },
+   "thornwild": {
+    "games": 40,
+    "wins": 26
+   },
+   "astral": {
+    "games": 40,
+    "wins": 15
+   }
+  },
+  "galeblade": {
+   "emberwing": {
+    "games": 40,
+    "wins": 17
+   },
+   "tidecaller": {
+    "games": 40,
+    "wins": 17
+   },
+   "ironclad": {
+    "games": 40,
+    "wins": 18
+   },
+   "gloomveil": {
+    "games": 40,
+    "wins": 17
+   },
+   "lumina": {
+    "games": 40,
+    "wins": 15
+   },
+   "thornwild": {
+    "games": 40,
+    "wins": 14
+   },
+   "astral": {
+    "games": 40,
+    "wins": 13
+   }
+  },
+  "thornwild": {
+   "emberwing": {
+    "games": 40,
+    "wins": 19
+   },
+   "tidecaller": {
+    "games": 40,
+    "wins": 16
+   },
+   "ironclad": {
+    "games": 40,
+    "wins": 12
+   },
+   "gloomveil": {
+    "games": 40,
+    "wins": 16
+   },
+   "lumina": {
+    "games": 40,
+    "wins": 14
+   },
+   "galeblade": {
+    "games": 40,
+    "wins": 26
+   },
+   "astral": {
+    "games": 40,
+    "wins": 20
+   }
+  },
+  "astral": {
+   "emberwing": {
+    "games": 40,
+    "wins": 26
+   },
+   "tidecaller": {
+    "games": 40,
+    "wins": 19
+   },
+   "ironclad": {
+    "games": 40,
+    "wins": 25
+   },
+   "gloomveil": {
+    "games": 40,
+    "wins": 26
+   },
+   "lumina": {
+    "games": 40,
+    "wins": 25
+   },
+   "galeblade": {
+    "games": 40,
+    "wins": 27
+   },
+   "thornwild": {
+    "games": 40,
+    "wins": 20
+   }
+  }
+ },
+ "cards": [
+  {
+   "id": "GEN-S01",
+   "inclusion": 0.9575892857142857,
+   "avgCopies": 1.7412587412587412,
+   "played": 0.2545454545454545,
+   "winRate": 0.5011655011655012,
+   "games": 2145
+  },
+  {
+   "id": "GEN-S02",
+   "inclusion": 0.9178571428571428,
+   "avgCopies": 1,
+   "played": 0.33900778210116733,
+   "winRate": 0.5014591439688716,
+   "games": 2056
+  },
+  {
+   "id": "GEN-S03",
+   "inclusion": 0.8348214285714286,
+   "avgCopies": 1,
+   "played": 0.35561497326203206,
+   "winRate": 0.5042780748663102,
+   "games": 1870
+  },
+  {
+   "id": "GEN-T01",
+   "inclusion": 0.7919642857142857,
+   "avgCopies": 1.0512965050732808,
+   "played": 0.23280721533258172,
+   "winRate": 0.4971815107102593,
+   "games": 1774
+  },
+  {
+   "id": "GEN-T03",
+   "inclusion": 0.7919642857142857,
+   "avgCopies": 1,
+   "played": 0.22266065388951523,
+   "winRate": 0.52423900789177,
+   "games": 1774
+  },
+  {
+   "id": "GEN-S05",
+   "inclusion": 0.753125,
+   "avgCopies": 1,
+   "played": 0.3633669235328986,
+   "winRate": 0.5044457617071725,
+   "games": 1687
+  },
+  {
+   "id": "GEN-T04",
+   "inclusion": 0.6241071428571429,
+   "avgCopies": 1.261802575107296,
+   "played": 0.2696709585121602,
+   "winRate": 0.505722460658083,
+   "games": 1398
+  },
+  {
+   "id": "GEN-T05",
+   "inclusion": 0.5,
+   "avgCopies": 1.6714285714285715,
+   "played": 0.4125,
+   "winRate": 0.5205357142857143,
+   "games": 1120
+  },
+  {
+   "id": "GEN-S04",
+   "inclusion": 0.49955357142857143,
+   "avgCopies": 1.1680071492403932,
+   "played": 0.3521000893655049,
+   "winRate": 0.5058087578194816,
+   "games": 1119
+  },
+  {
+   "id": "GEN-S12",
+   "inclusion": 0.49776785714285715,
+   "avgCopies": 1.420627802690583,
+   "played": 0.4044843049327354,
+   "winRate": 0.47713004484304933,
+   "games": 1115
+  },
+  {
+   "id": "GEN-002",
+   "inclusion": 0.4589285714285714,
+   "avgCopies": 1.453307392996109,
+   "played": 0.4095330739299611,
+   "winRate": 0.4591439688715953,
+   "games": 1028
+  },
+  {
+   "id": "GEN-T06",
+   "inclusion": 0.41696428571428573,
+   "avgCopies": 1,
+   "played": 0.11563169164882227,
+   "winRate": 0.550321199143469,
+   "games": 934
+  },
+  {
+   "id": "GEN-T02",
+   "inclusion": 0.415625,
+   "avgCopies": 1.9860365198711063,
+   "played": 0.4167561761546724,
+   "winRate": 0.4747583243823845,
+   "games": 931
+  },
+  {
+   "id": "GEN-001",
+   "inclusion": 0.41517857142857145,
+   "avgCopies": 1.7053763440860215,
+   "played": 0.32150537634408605,
+   "winRate": 0.5516129032258065,
+   "games": 930
+  },
+  {
+   "id": "GEN-S10",
+   "inclusion": 0.3767857142857143,
+   "avgCopies": 1,
+   "played": 0.22630331753554503,
+   "winRate": 0.5450236966824644,
+   "games": 844
+  },
+  {
+   "id": "GEN-009",
+   "inclusion": 0.29375,
+   "avgCopies": 1.2826747720364742,
+   "played": 0.23100303951367782,
+   "winRate": 0.5334346504559271,
+   "games": 658
+  },
+  {
+   "id": "GEN-S13",
+   "inclusion": 0.2924107142857143,
+   "avgCopies": 1.8595419847328245,
+   "played": 0.5328244274809161,
+   "winRate": 0.5450381679389313,
+   "games": 655
+  },
+  {
+   "id": "GEN-S06",
+   "inclusion": 0.2910714285714286,
+   "avgCopies": 1.5797546012269938,
+   "played": 0.450920245398773,
+   "winRate": 0.5107361963190185,
+   "games": 652
+  },
+  {
+   "id": "GEN-007",
+   "inclusion": 0.290625,
+   "avgCopies": 2.144393241167435,
+   "played": 0.5576036866359447,
+   "winRate": 0.4930875576036866,
+   "games": 651
+  },
+  {
+   "id": "GEN-S09",
+   "inclusion": 0.2892857142857143,
+   "avgCopies": 1.4320987654320987,
+   "played": 0.4305555555555556,
+   "winRate": 0.4783950617283951,
+   "games": 648
+  },
+  {
+   "id": "GEN-S07",
+   "inclusion": 0.25089285714285714,
+   "avgCopies": 1.498220640569395,
+   "played": 0.5462633451957295,
+   "winRate": 0.5231316725978647,
+   "games": 562
+  },
+  {
+   "id": "GEN-005",
+   "inclusion": 0.25,
+   "avgCopies": 1.5,
+   "played": 0.2982142857142857,
+   "winRate": 0.45714285714285713,
+   "games": 560
+  },
+  {
+   "id": "GEN-S11",
+   "inclusion": 0.25,
+   "avgCopies": 1,
+   "played": 0.2857142857142857,
+   "winRate": 0.5303571428571429,
+   "games": 560
+  },
+  {
+   "id": "GEN-T07",
+   "inclusion": 0.24955357142857143,
+   "avgCopies": 1.1735241502683362,
+   "played": 0.29695885509839,
+   "winRate": 0.4472271914132379,
+   "games": 559
+  },
+  {
+   "id": "GEN-003",
+   "inclusion": 0.20669642857142856,
+   "avgCopies": 2.012958963282937,
+   "played": 0.48812095032397407,
+   "winRate": 0.5161987041036717,
+   "games": 463
+  },
+  {
+   "id": "GEN-010",
+   "inclusion": 0.20625,
+   "avgCopies": 1,
+   "played": 0.03463203463203463,
+   "winRate": 0.5324675324675324,
+   "games": 462
+  },
+  {
+   "id": "GEN-008",
+   "inclusion": 0.20625,
+   "avgCopies": 1,
+   "played": 0.010822510822510822,
+   "winRate": 0.4069264069264069,
+   "games": 462
+  },
+  {
+   "id": "AST-F02",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 4.307142857142857,
+   "winRate": 0.6,
+   "games": 280
+  },
+  {
+   "id": "IRN-004",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 2.6142857142857143,
+   "winRate": 0.5678571428571428,
+   "games": 280
+  },
+  {
+   "id": "GLM-001",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 2.4535714285714287,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "GLM-002",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 2.289285714285714,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "GLM-003",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 2.1678571428571427,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "GLM-004",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.9535714285714285,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "TID-001",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.8928571428571428,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "LUM-002",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.8892857142857142,
+   "winRate": 0.5571428571428572,
+   "games": 280
+  },
+  {
+   "id": "IRN-001",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.8464285714285715,
+   "winRate": 0.5678571428571428,
+   "games": 280
+  },
+  {
+   "id": "TID-003",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.6964285714285714,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "THN-003",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.5892857142857142,
+   "winRate": 0.4392857142857143,
+   "games": 280
+  },
+  {
+   "id": "LUM-001",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.575,
+   "winRate": 0.5571428571428572,
+   "games": 280
+  },
+  {
+   "id": "IRN-003",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.5285714285714285,
+   "winRate": 0.5678571428571428,
+   "games": 280
+  },
+  {
+   "id": "AST-007",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 1.4142857142857144,
+   "winRate": 0.6,
+   "games": 280
+  },
+  {
+   "id": "EMB-003",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.325,
+   "winRate": 0.4107142857142857,
+   "games": 280
+  },
+  {
+   "id": "AST-001",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.2964285714285715,
+   "winRate": 0.6,
+   "games": 280
+  },
+  {
+   "id": "GAL-001",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.2607142857142857,
+   "winRate": 0.3964285714285714,
+   "games": 280
+  },
+  {
+   "id": "AST-004",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.2142857142857142,
+   "winRate": 0.6,
+   "games": 280
+  },
+  {
+   "id": "THN-006",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.0964285714285715,
+   "winRate": 0.4392857142857143,
+   "games": 280
+  },
+  {
+   "id": "LUM-004",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.0928571428571427,
+   "winRate": 0.5571428571428572,
+   "games": 280
+  },
+  {
+   "id": "TID-002",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.0785714285714285,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "EMB-004",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.0714285714285714,
+   "winRate": 0.4107142857142857,
+   "games": 280
+  },
+  {
+   "id": "EMB-001",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.0535714285714286,
+   "winRate": 0.4107142857142857,
+   "games": 280
+  },
+  {
+   "id": "THN-002",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.0392857142857144,
+   "winRate": 0.4392857142857143,
+   "games": 280
+  },
+  {
+   "id": "LUM-007",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1.0142857142857142,
+   "winRate": 0.5571428571428572,
+   "games": 280
+  },
+  {
+   "id": "LUM-003",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 1,
+   "winRate": 0.5571428571428572,
+   "games": 280
+  },
+  {
+   "id": "LUM-009",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.9964285714285714,
+   "winRate": 0.5571428571428572,
+   "games": 280
+  },
+  {
+   "id": "EMB-002",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.9571428571428572,
+   "winRate": 0.4107142857142857,
+   "games": 280
+  },
+  {
+   "id": "AST-F01",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.9357142857142857,
+   "winRate": 0.6,
+   "games": 280
+  },
+  {
+   "id": "GLM-007",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.8785714285714286,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "EMB-007",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.8642857142857143,
+   "winRate": 0.4107142857142857,
+   "games": 280
+  },
+  {
+   "id": "GLM-006",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.8464285714285714,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "AST-008",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.8357142857142857,
+   "winRate": 0.6,
+   "games": 280
+  },
+  {
+   "id": "THN-004",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.8214285714285714,
+   "winRate": 0.4392857142857143,
+   "games": 280
+  },
+  {
+   "id": "GAL-003",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.8071428571428572,
+   "winRate": 0.3964285714285714,
+   "games": 280
+  },
+  {
+   "id": "GAL-006",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.7357142857142858,
+   "winRate": 0.3964285714285714,
+   "games": 280
+  },
+  {
+   "id": "TID-F01",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.7285714285714285,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "THN-007",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.7285714285714285,
+   "winRate": 0.4392857142857143,
+   "games": 280
+  },
+  {
+   "id": "AST-002",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.725,
+   "winRate": 0.6,
+   "games": 280
+  },
+  {
+   "id": "GAL-004",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.7142857142857143,
+   "winRate": 0.3964285714285714,
+   "games": 280
+  },
+  {
+   "id": "GAL-002",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.7107142857142857,
+   "winRate": 0.3964285714285714,
+   "games": 280
+  },
+  {
+   "id": "IRN-002",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.7071428571428572,
+   "winRate": 0.5678571428571428,
+   "games": 280
+  },
+  {
+   "id": "THN-001",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.7071428571428572,
+   "winRate": 0.4392857142857143,
+   "games": 280
+  },
+  {
+   "id": "LUM-008",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.7035714285714286,
+   "winRate": 0.5571428571428572,
+   "games": 280
+  },
+  {
+   "id": "THN-009",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.7,
+   "winRate": 0.4392857142857143,
+   "games": 280
+  },
+  {
+   "id": "TID-006",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.6892857142857143,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "TID-007",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.6357142857142857,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "EMB-009",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.6142857142857143,
+   "winRate": 0.4107142857142857,
+   "games": 280
+  },
+  {
+   "id": "AST-003",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.6107142857142858,
+   "winRate": 0.6,
+   "games": 280
+  },
+  {
+   "id": "TID-008",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.6071428571428571,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "GAL-009",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.6,
+   "winRate": 0.3964285714285714,
+   "games": 280
+  },
+  {
+   "id": "EMB-006",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.5857142857142857,
+   "winRate": 0.4107142857142857,
+   "games": 280
+  },
+  {
+   "id": "GLM-009",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.5714285714285714,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "LUM-006",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.5571428571428572,
+   "winRate": 0.5571428571428572,
+   "games": 280
+  },
+  {
+   "id": "THN-008",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.5535714285714286,
+   "winRate": 0.4392857142857143,
+   "games": 280
+  },
+  {
+   "id": "TID-004",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.5464285714285714,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "AST-006",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.5428571428571428,
+   "winRate": 0.6,
+   "games": 280
+  },
+  {
+   "id": "IRN-007",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.5392857142857143,
+   "winRate": 0.5678571428571428,
+   "games": 280
+  },
+  {
+   "id": "EMB-005",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.5321428571428571,
+   "winRate": 0.4107142857142857,
+   "games": 280
+  },
+  {
+   "id": "IRN-009",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.5321428571428571,
+   "winRate": 0.5678571428571428,
+   "games": 280
+  },
+  {
+   "id": "EMB-008",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.525,
+   "winRate": 0.4107142857142857,
+   "games": 280
+  },
+  {
+   "id": "IRN-008",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.525,
+   "winRate": 0.5678571428571428,
+   "games": 280
+  },
+  {
+   "id": "GLM-008",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.525,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "GAL-008",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.5214285714285715,
+   "winRate": 0.3964285714285714,
+   "games": 280
+  },
+  {
+   "id": "LUM-F01",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.5142857142857142,
+   "winRate": 0.5571428571428572,
+   "games": 280
+  },
+  {
+   "id": "LUM-005",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.48214285714285715,
+   "winRate": 0.5571428571428572,
+   "games": 280
+  },
+  {
+   "id": "IRN-006",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.45,
+   "winRate": 0.5678571428571428,
+   "games": 280
+  },
+  {
+   "id": "GAL-007",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.4357142857142857,
+   "winRate": 0.3964285714285714,
+   "games": 280
+  },
+  {
+   "id": "GEN-004",
+   "inclusion": 0.125,
+   "avgCopies": 1.6928571428571428,
+   "played": 0.43214285714285716,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "IRN-F01",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.4107142857142857,
+   "winRate": 0.5678571428571428,
+   "games": 280
+  },
+  {
+   "id": "GLM-005",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.40714285714285714,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "THN-005",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.35714285714285715,
+   "winRate": 0.4392857142857143,
+   "games": 280
+  },
+  {
+   "id": "THN-F01",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.3464285714285714,
+   "winRate": 0.4392857142857143,
+   "games": 280
+  },
+  {
+   "id": "GLM-F01",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.325,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "EMB-F01",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.3,
+   "winRate": 0.4107142857142857,
+   "games": 280
+  },
+  {
+   "id": "TID-005",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.28214285714285714,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "AST-009",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.275,
+   "winRate": 0.6,
+   "games": 280
+  },
+  {
+   "id": "GEN-006",
+   "inclusion": 0.125,
+   "avgCopies": 1.35,
+   "played": 0.2357142857142857,
+   "winRate": 0.46785714285714286,
+   "games": 280
+  },
+  {
+   "id": "TID-009",
+   "inclusion": 0.125,
+   "avgCopies": 3,
+   "played": 0.21071428571428572,
+   "winRate": 0.5142857142857142,
+   "games": 280
+  },
+  {
+   "id": "GAL-F01",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.16428571428571428,
+   "winRate": 0.3964285714285714,
+   "games": 280
+  },
+  {
+   "id": "AST-005",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.14642857142857144,
+   "winRate": 0.6,
+   "games": 280
+  },
+  {
+   "id": "IRN-005",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.10714285714285714,
+   "winRate": 0.5678571428571428,
+   "games": 280
+  },
+  {
+   "id": "GAL-005",
+   "inclusion": 0.125,
+   "avgCopies": 2,
+   "played": 0.05714285714285714,
+   "winRate": 0.3964285714285714,
+   "games": 280
+  },
+  {
+   "id": "GEN-S08",
+   "inclusion": 0.12366071428571429,
+   "avgCopies": 1,
+   "played": 0.2490974729241877,
+   "winRate": 0.48014440433212996,
+   "games": 277
+  }
+ ],
+ "turnHistogram": [
+  {
+   "label": "1–4",
+   "count": 29
+  },
+  {
+   "label": "5–8",
+   "count": 247
+  },
+  {
+   "label": "9–12",
+   "count": 350
+  },
+  {
+   "label": "13–16",
+   "count": 215
+  },
+  {
+   "label": "17–20",
+   "count": 142
+  },
+  {
+   "label": "21+",
+   "count": 137
+  }
+ ],
+ "winReasons": {
+  "lp": 1120
+ }
+}

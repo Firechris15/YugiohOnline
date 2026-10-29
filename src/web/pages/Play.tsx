@@ -11,6 +11,7 @@ import { Card } from '../components/Card';
 import { Icon } from '../components/Icons';
 import { coverCard } from './Decks';
 import type { PublicRoom } from '../../shared/protocol';
+import { IS_STATIC } from '../config';
 import '../styles/play.css';
 
 type Level = 'easy' | 'normal' | 'hard';
@@ -40,6 +41,7 @@ export default function PlayPage() {
 
   useEffect(() => {
     void probeServer().then(setServer);
+    if (IS_STATIC) return;
     const load = () =>
       fetch(apiUrl('/api/rooms'))
         .then((r) => (r.ok ? r.json() : { rooms: [] }))
@@ -234,7 +236,7 @@ export default function PlayPage() {
         </motion.div>
       </div>
 
-      {!serverOk && server && <div className="panel panel-pad muted small" style={{ marginTop: 18 }}>{t('play.serverOffline')}</div>}
+      {!serverOk && server && <div className="panel panel-pad muted small" style={{ marginTop: 18 }}>{t(IS_STATIC ? 'play.staticOnly' : 'play.serverOffline')}</div>}
 
       {serverOk && (
         <section className="panel panel-pad" style={{ marginTop: 20 }}>

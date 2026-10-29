@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { getDef, isExtraDeckCard, sortDeckIds, validateDeck, encodeDeck, DECK_RULES } from '../../engine';
 import { useT } from '../i18n';
 import { useDecks } from '../store/decks';
-import { toast } from '../store/ui';
+import { askConfirm, toast } from '../store/ui';
 import { Card } from '../components/Card';
 import { CardText, CardModal } from '../components/CardDetail';
 import { CardFilterBar, DEFAULT_FILTERS, useFilteredCards, type FilterState } from '../components/CardFilters';
@@ -210,7 +210,7 @@ export default function DeckBuilderPage() {
               <button
                 className="btn btn-sm btn-danger"
                 onClick={() => {
-                  if (confirm(`${t('builder.clear')}?`)) update(deck.id, { main: [], extra: [] });
+                  void askConfirm(`${t('builder.clear')}?`).then((ok) => ok && update(deck.id, { main: [], extra: [] }));
                 }}
               >
                 {t('builder.clear')}

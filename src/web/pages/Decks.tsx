@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { STARTER_DECKS, ARCHETYPE_BY_ID, decodeDeck, detectArchetype, encodeDeck, isDeckLegal, getDef, type DeckList } from '../../engine';
 import { useT } from '../i18n';
 import { useDecks, type UserDeck } from '../store/decks';
-import { toast } from '../store/ui';
+import { askConfirm, toast } from '../store/ui';
 import { Card } from '../components/Card';
 import { Icon } from '../components/Icons';
 import '../styles/decks.css';
@@ -79,7 +79,7 @@ function DeckTile({ deck, onEdit }: { deck: UserDeck; onEdit: () => void }) {
           <button
             className="btn btn-sm btn-danger"
             onClick={() => {
-              if (confirm(t('decks.deleteConfirm', { name: deck.name }))) remove(deck.id);
+              void askConfirm(t('decks.deleteConfirm', { name: deck.name })).then((ok) => ok && remove(deck.id));
             }}
             title={t('decks.delete')}
           >

@@ -10,6 +10,7 @@ import { cardName } from '../lib/cards';
 import { FieldSide, Hand, LifePanel, PhaseBar, ChainStack, type BoardHandlers, type CardUiState } from './board';
 import { ActionMenu, ActivationSpotlight, Banner, DuelIntro, EffectsLayer, GameOverOverlay, LogPanel, PilesModal, PreviewPanel, PromptOverlay, findCard, type FxItem, type MenuEntry } from './overlays';
 import { Icon } from '../components/Icons';
+import { askConfirm } from '../store/ui';
 import '../styles/duel.css';
 
 export interface DuelSource {
@@ -513,7 +514,7 @@ export function DuelBoard({ incoming, source }: { incoming: GameView[]; source: 
             className="btn btn-ghost btn-sm surrender"
             onClick={() => {
               if (view.winner !== null) return source.leave();
-              if (confirm(t('duel.surrenderConfirm'))) source.surrender();
+              void askConfirm(t('duel.surrenderConfirm')).then((ok) => ok && source.surrender());
             }}
           >
             <Icon.Flag size={14} /> {t('duel.surrender')}

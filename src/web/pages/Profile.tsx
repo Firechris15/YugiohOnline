@@ -5,6 +5,7 @@ import { useSettings, type AnimSpeed } from '../store/settings';
 import { useHistory } from '../store/history';
 import { StatTile } from '../components/Charts';
 import { sfx } from '../lib/sound';
+import { askConfirm } from '../store/ui';
 import '../styles/profile.css';
 
 export default function ProfilePage() {
@@ -99,7 +100,7 @@ export default function ProfilePage() {
             </motion.div>
           ))}
           <div className="center" style={{ padding: 12 }}>
-            <button className="btn btn-ghost btn-sm" onClick={() => confirm(`${t('profile.clearHistory')}?`) && clear()}>
+            <button className="btn btn-ghost btn-sm" onClick={() => void askConfirm(`${t('profile.clearHistory')}?`).then((ok) => ok && clear())}>
               {t('profile.clearHistory')}
             </button>
           </div>

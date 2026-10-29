@@ -11,7 +11,8 @@
     "start": "node dist-server/index.js",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p .",
-    "simulate": "tsx scripts/simulate-meta.ts"
+    "simulate": "tsx scripts/simulate-meta.ts",
+    "build:static": "node scripts/build-static.mjs"
   },
   "dependencies": {
     "framer-motion": "12.43.0",

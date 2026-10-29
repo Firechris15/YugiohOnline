@@ -6,6 +6,7 @@ import type { MetaStats } from '../../engine/meta';
 import metaSim from '../../data/meta-sim.json';
 import { useT } from '../i18n';
 import { apiUrl } from '../lib/net';
+import { IS_STATIC } from '../config';
 import { Card } from '../components/Card';
 import { CardModal } from '../components/CardDetail';
 import { ColumnChart, DivergingBars, Meter, StatTile, divergingColor } from '../components/Charts';
@@ -47,6 +48,7 @@ export default function MetaPage() {
   const [showTable, setShowTable] = useState(false);
 
   useEffect(() => {
+    if (IS_STATIC) return;
     fetch(apiUrl('/api/meta'))
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then((j: { sim: MetaStats; online: MetaStats }) => {
@@ -84,15 +86,17 @@ export default function MetaPage() {
           <h1>{t('meta.title')}</h1>
           <p>{t('meta.lead')}</p>
         </div>
-        <Tabs
-          id="meta-src"
-          value={source}
-          onChange={setSource}
-          items={[
-            { value: 'sim', label: t('meta.sim') },
-            { value: 'online', label: `${t('meta.online')}${online ? ` (${online.games})` : ''}` },
-          ]}
-        />
+        {!IS_STATIC && (
+          <Tabs
+            id="meta-src"
+            value={source}
+            onChange={setSource}
+            items={[
+              { value: 'sim', label: t('meta.sim') },
+              { value: 'online', label: `${t('meta.online')}${online ? ` (${online.games})` : ''}` },
+            ]}
+          />
+        )}
       </div>
 
       {serverDown && source === 'online' && <div className="panel panel-pad muted" style={{ marginBottom: 20 }}>{t('meta.serverOffline')}</div>}

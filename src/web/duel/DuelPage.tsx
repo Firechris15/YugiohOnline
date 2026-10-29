@@ -91,7 +91,7 @@ function BotDuel() {
 
 function WaitingRoom({ code, onLeave }: { code: string; onLeave: () => void }) {
   const t = useT();
-  const link = `${location.origin}/play?join=${code}`;
+  const link = `${location.origin}${location.pathname.replace(/\/duel\/.*$/, '')}/play?join=${code}`;
   return (
     <div className="waiting-room">
       <motion.div className="panel waiting-card" initial={{ opacity: 0, y: 20, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }}>

@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { Footer, Navbar, PageTransition, Toasts } from './components/Layout';
+import { ConfirmHost, Footer, Navbar, PageTransition, Toasts } from './components/Layout';
 import { useSettings } from './store/settings';
 import { HomePage } from './pages/Home';
 
@@ -58,6 +58,7 @@ export function App() {
       </Suspense>
       {!inDuel && <Footer />}
       <Toasts />
+      <ConfirmHost />
     </>
   );
 }

@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import type { Action, DeckList, GameView } from '../../engine';
 import type { ClientMsg, PublicRoom, RoomInfo, ServerMsg } from '../../shared/protocol';
 import { useSettings, playerName } from '../store/settings';
+import { IS_STATIC } from '../config';
 
 export interface ChatLine {
   from: 0 | 1;
@@ -66,6 +67,7 @@ export const useNet = create<NetState>()((set, get) => ({
   closedReason: null,
 
   connect: () => {
+    if (IS_STATIC) return Promise.reject(new Error('no server in static build'));
     if (ws && ws.readyState === WebSocket.OPEN) return Promise.resolve();
     if (connecting) return connecting;
     set({ status: 'connecting' });
@@ -195,6 +197,7 @@ function handle(msg: ServerMsg) {
 
 /** Ping the HTTP API to see whether the server is reachable. */
 export async function probeServer(): Promise<{ ok: boolean; online: number }> {
+  if (IS_STATIC) return { ok: false, online: 0 };
   try {
     const res = await fetch(apiUrl('/api/health'), { cache: 'no-store' });
     if (!res.ok) return { ok: false, online: 0 };

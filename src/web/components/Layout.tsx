@@ -3,10 +3,10 @@ import { NavLink, Link, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useT } from '../i18n';
 import { useSettings } from '../store/settings';
-import { useUi } from '../store/ui';
+import { answerConfirm, useUi } from '../store/ui';
 import { probeServer } from '../lib/net';
 import { Icon } from './Icons';
-import { SITE_NAME } from '../config';
+import { IS_STATIC, SITE_NAME } from '../config';
 import '../styles/layout.css';
 
 export function Logo({ size = 30 }: { size?: number }) {
@@ -49,6 +49,7 @@ export function Navbar() {
       const r = await probeServer();
       if (alive) setOnline(r.ok ? r.online : null);
     };
+    if (IS_STATIC) return;
     void poll();
     const id = setInterval(poll, 30_000);
     return () => {
@@ -89,10 +90,10 @@ export function Navbar() {
           </NavLink>
         </nav>
         <div className="nav-right">
-          <span className={`nav-online ${online === null ? 'off' : ''}`} title={online === null ? t('nav.offline') : t('nav.online', { n: online })}>
+          {!IS_STATIC && <span className={`nav-online ${online === null ? 'off' : ''}`} title={online === null ? t('nav.offline') : t('nav.online', { n: online })}>
             <i />
             <span className="hidden-mobile">{online === null ? t('nav.offline') : t('nav.online', { n: online })}</span>
-          </span>
+          </span>}
           <button className="btn btn-ghost btn-sm nav-lang" onClick={() => set({ lang: lang === 'de' ? 'en' : 'de' })} aria-label="Language">
             <Icon.Globe size={16} /> {lang.toUpperCase()}
           </button>
@@ -151,6 +152,27 @@ export function Toasts() {
         ))}
       </AnimatePresence>
     </div>
+  );
+}
+
+export function ConfirmHost() {
+  const t = useT();
+  const req = useUi((s) => s.confirm);
+  return (
+    <Modal open={!!req} onClose={() => answerConfirm(false)}>
+      <div className="confirm">
+        <h3>{t('common.confirmTitle')}</h3>
+        <p className="muted">{req?.text}</p>
+        <div className="row" style={{ justifyContent: 'flex-end', gap: 10 }}>
+          <button className="btn" onClick={() => answerConfirm(false)}>
+            {t('duel.no')}
+          </button>
+          <button className="btn btn-primary" onClick={() => answerConfirm(true)} autoFocus>
+            {t('duel.yes')}
+          </button>
+        </div>
+      </div>
+    </Modal>
   );
 }
 

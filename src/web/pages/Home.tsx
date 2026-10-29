@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { ARCHETYPES, allCards } from '../../engine';
+import { ARCHETYPES, STARTER_DECKS, allCards } from '../../engine';
 import { useT } from '../i18n';
 import { Card } from '../components/Card';
 import { Particles } from '../components/Particles';
@@ -10,7 +10,7 @@ import { CardModal } from '../components/CardDetail';
 import { probeServer } from '../lib/net';
 import metaSim from '../../data/meta-sim.json';
 import type { MetaStats } from '../../engine/meta';
-import { SITE_NAME } from '../config';
+import { IS_STATIC, SITE_NAME } from '../config';
 import '../styles/home.css';
 
 const META = metaSim as MetaStats;
@@ -158,7 +158,7 @@ export function HomePage() {
           <Stat value={allCards().length} label={t('home.stat.cards')} />
           <Stat value={ARCHETYPES.length} label={t('home.stat.archetypes')} />
           <Stat value={META.games} label={t('home.stat.duels')} />
-          <Stat value={online} label={t('home.stat.online')} />
+          {IS_STATIC ? <Stat value={STARTER_DECKS.length} label={t('home.stat.starters')} /> : <Stat value={online} label={t('home.stat.online')} />}
         </div>
       </section>
 

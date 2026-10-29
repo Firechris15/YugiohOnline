@@ -67,19 +67,6 @@ async function fetchJson<T>(url: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-/** Card database shipped next to the static build (gzip-compressed JSON). */
-async function fetchBundled(): Promise<CardDb> {
-  const res = await fetch('./cards.json.gz');
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const buf = new Uint8Array(await res.arrayBuffer());
-  let text: string;
-  if (buf[0] === 0x1f && buf[1] === 0x8b) {
-    const stream = new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'));
-    text = await new Response(stream).text();
-  } else text = new TextDecoder().decode(buf); // the host already decompressed it
-  return JSON.parse(text) as CardDb;
-}
-
 /** Newer data than the cache, or null when the cache is current. */
 async function fetchFresh(cached?: CardDb): Promise<CardDb | null> {
   if (!IS_STATIC) {
@@ -90,7 +77,7 @@ async function fetchFresh(cached?: CardDb): Promise<CardDb | null> {
   }
   if (cached && Date.now() - cached.updated < DAY) return null;
   try {
-    const bundled = await fetchBundled();
+    const bundled = await fetchJson<CardDb>('./cards.json');
     if (bundled?.cards?.length) return cached?.version === bundled.version ? null : bundled;
   } catch {
     /* no bundled copy: ask YGOPRODeck directly */

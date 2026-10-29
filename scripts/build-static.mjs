@@ -5,7 +5,6 @@
 // document skeleton, for hosts that wrap the page themselves.
 import { build } from 'vite';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { gzipSync } from 'node:zlib';
 
 process.env.VITE_STATIC = '1';
 await build({ base: './', build: { outDir: 'dist-static', emptyOutDir: true }, logLevel: 'warn' });
@@ -30,10 +29,9 @@ writeFileSync('dist-static/artifact.html', page);
 if (existsSync('data/cards.json')) {
   const db = JSON.parse(readFileSync('data/cards.json', 'utf8'));
   // alternate artworks and type texts are not needed by the client
-  const slim = { ...db, cards: db.cards.map(({ im, t, ...c }) => c) };
-  const gz = gzipSync(JSON.stringify(slim), { level: 9 });
-  writeFileSync('dist-static/cards.json.gz', gz);
-  console.log(`dist-static/cards.json.gz: ${db.cards.length} cards, ${(gz.length / 1e6).toFixed(1)} MB`);
+  const slim = JSON.stringify({ ...db, cards: db.cards.map(({ im, t, ...c }) => c) });
+  writeFileSync('dist-static/cards.json', slim);
+  console.log(`dist-static/cards.json: ${db.cards.length} cards, ${(slim.length / 1e6).toFixed(1)} MB (hosts usually serve it gzip-compressed)`);
 } else {
   console.log('No data/cards.json – the static build will load real cards from YGOPRODeck at runtime.');
 }

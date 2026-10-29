@@ -230,18 +230,18 @@ function expandOption(g: GameState, opt: ActionOption, me: PlayerId, rand: Rand)
       const vv = v as typeof base;
       if (r.kind === 'tributes') {
         const cheapest = [...r.options].sort((a, b) => monsterValue(g, a) - monsterValue(g, b)).slice(0, r.count);
-        next.push({ ...vv, tributes: cheapest });
+        next.push({ ...vv, tributes: cheapest } as Action);
       } else if (r.kind === 'costs') {
         const sorted = [...r.options].sort((a, b) => (r.what === 'tribute' ? monsterValue(g, a) - monsterValue(g, b) : cardValue(g, a) - cardValue(g, b)));
-        next.push({ ...vv, costs: sorted.slice(0, r.count) });
-        if (r.options.length > r.count) next.push({ ...vv, costs: sorted.slice(1, r.count + 1) });
+        next.push({ ...vv, costs: sorted.slice(0, r.count) } as Action);
+        if (r.options.length > r.count) next.push({ ...vv, costs: sorted.slice(1, r.count + 1) } as Action);
       } else {
         const ranked = [...r.options].sort((a, b) => valueAsTarget(g, b, me) - valueAsTarget(g, a, me));
         if (r.max === 1 || ranked.length <= 1) {
-          for (const t of ranked.slice(0, 8)) next.push({ ...vv, targets: [t] });
+          for (const t of ranked.slice(0, 8)) next.push({ ...vv, targets: [t] } as Action);
         } else {
-          next.push({ ...vv, targets: ranked.slice(0, Math.min(r.max, ranked.length)) });
-          for (const t of ranked.slice(0, 5)) next.push({ ...vv, targets: [t] });
+          next.push({ ...vv, targets: ranked.slice(0, Math.min(r.max, ranked.length)) } as Action);
+          for (const t of ranked.slice(0, 5)) next.push({ ...vv, targets: [t] } as Action);
         }
       }
     }

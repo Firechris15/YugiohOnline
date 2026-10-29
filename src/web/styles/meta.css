@@ -1,0 +1,316 @@
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.meta-section h2 {
+  font-size: 20px;
+  margin-bottom: 14px;
+}
+
+.arch-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(5, 6, 15, 0.8);
+}
+
+.meta-two {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 1000px) {
+  .meta-two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.tier-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tier-row {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.tier-label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  padding: 8px;
+  text-align: center;
+}
+
+.tier-label span {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.tier-label small {
+  font-size: 11px;
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
+.tier-S .tier-label {
+  background: linear-gradient(135deg, rgba(255, 204, 77, 0.3), rgba(255, 140, 60, 0.2));
+  color: #ffe08a;
+  border: 1px solid rgba(255, 204, 77, 0.45);
+}
+.tier-A .tier-label {
+  background: rgba(177, 77, 255, 0.18);
+  color: #d9b3ff;
+  border: 1px solid rgba(177, 77, 255, 0.4);
+}
+.tier-B .tier-label {
+  background: rgba(77, 225, 255, 0.12);
+  color: #b3f1ff;
+  border: 1px solid rgba(77, 225, 255, 0.32);
+}
+.tier-C .tier-label {
+  background: rgba(126, 148, 255, 0.08);
+  color: var(--text-dim);
+  border: 1px solid var(--panel-border);
+}
+
+.tier-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 12px;
+  background: rgba(5, 6, 15, 0.35);
+  min-height: 70px;
+}
+
+.tier-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+  background: linear-gradient(120deg, color-mix(in srgb, var(--c) 20%, transparent), rgba(20, 26, 58, 0.6));
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.tier-item .card-xs {
+  --w: 40px;
+}
+
+.tier-item b {
+  display: block;
+  font-size: 14px;
+}
+
+.tier-item small {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.share-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.share-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 56px;
+  gap: 12px;
+  align-items: center;
+  padding: 5px 6px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13.5px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.share-row:hover {
+  background: rgba(126, 148, 255, 0.07);
+}
+
+.share-row .mono {
+  text-align: right;
+}
+
+.matrix-wrap {
+  overflow-x: auto;
+}
+
+.matrix {
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: 13px;
+  min-width: 640px;
+  width: 100%;
+}
+
+.matrix th {
+  font-weight: 600;
+  color: var(--text-dim);
+  text-align: left;
+  white-space: nowrap;
+  padding: 4px 8px;
+}
+
+.matrix thead th {
+  text-align: center;
+}
+
+.matrix-col {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.matrix td {
+  text-align: center;
+  padding: 9px 4px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 44px;
+}
+
+.matrix-self,
+.matrix-empty {
+  color: var(--text-faint);
+  background: rgba(5, 6, 15, 0.4);
+}
+
+.matrix-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.matrix-legend i {
+  width: 160px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+.meta-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.meta-table th {
+  text-align: left;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
+  font-weight: 700;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.meta-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(126, 148, 255, 0.07);
+}
+
+.meta-table tbody tr {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.meta-table tbody tr:hover {
+  background: rgba(126, 148, 255, 0.07);
+}
+
+.meta-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.cards-table .card-xs {
+  --w: 38px;
+}
+
+.incl {
+  display: grid;
+  grid-template-columns: minmax(50px, 120px) 42px;
+  gap: 8px;
+  align-items: center;
+  justify-content: end;
+}
+
+.arch-detail-head {
+  display: flex;
+  gap: 22px;
+  align-items: center;
+}
+
+.arch-detail-head .card-md {
+  --w: 130px;
+}
+
+.mu-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 8px;
+  background: rgba(5, 6, 15, 0.35);
+  margin-bottom: 6px;
+}
+
+.arch-decklist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.decklist-item {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease);
+}
+
+.decklist-item:hover {
+  transform: translateY(-4px);
+}
+
+.decklist-item .card-xs {
+  --w: 62px;
+}
+
+@media (max-width: 640px) {
+  .tier-row {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+  .tier-label small {
+    display: none;
+  }
+  .arch-detail-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

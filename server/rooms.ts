@@ -124,7 +124,8 @@ export class RoomManager {
       case 'ping':
         return conn.send({ t: 'pong', online: this.onlineCount });
       case 'createRoom':
-        return this.createRoom(conn, msg.deck, msg.deckName, !!msg.isPublic);
+        this.createRoom(conn, msg.deck, msg.deckName, !!msg.isPublic);
+        return;
       case 'joinRoom':
         return this.joinRoom(conn, String(msg.code ?? '').toUpperCase(), msg.deck, msg.deckName);
       case 'quickMatch':

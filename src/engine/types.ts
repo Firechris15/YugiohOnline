@@ -5,29 +5,15 @@
 
 export type PlayerId = 0 | 1;
 
-export type Attribute = 'LIGHT' | 'DARK' | 'FIRE' | 'WATER' | 'EARTH' | 'WIND';
+export type Attribute = 'LIGHT' | 'DARK' | 'FIRE' | 'WATER' | 'EARTH' | 'WIND' | 'DIVINE';
 
-export type Race =
-  | 'Dragon'
-  | 'Spellcaster'
-  | 'Warrior'
-  | 'Beast'
-  | 'Beast-Warrior'
-  | 'Winged Beast'
-  | 'Machine'
-  | 'Fiend'
-  | 'Zombie'
-  | 'Fairy'
-  | 'Aqua'
-  | 'Sea Serpent'
-  | 'Plant'
-  | 'Rock'
-  | 'Pyro'
-  | 'Insect';
+// Monster types ("races"), e.g. 'Dragon', 'Spellcaster', 'Beast-Warrior'.
+// Real cards bring many more (Dinosaur, Psychic, Cyberse, ...), so this is open.
+export type Race = string;
 
 export type CardKind = 'monster' | 'spell' | 'trap';
-export type MonsterFrame = 'normal' | 'effect' | 'fusion' | 'token';
-export type SpellType = 'normal' | 'quickplay' | 'continuous' | 'equip' | 'field';
+export type MonsterFrame = 'normal' | 'effect' | 'fusion' | 'ritual' | 'synchro' | 'xyz' | 'link' | 'token';
+export type SpellType = 'normal' | 'quickplay' | 'continuous' | 'equip' | 'field' | 'ritual';
 export type TrapType = 'normal' | 'continuous' | 'counter';
 export type Rarity = 'common' | 'rare' | 'super' | 'ultra' | 'secret';
 
@@ -44,7 +30,8 @@ export type Ability =
   | 'indestructibleBattle'
   | 'indestructibleEffect'
   | 'untargetable'
-  | 'cannotAttack';
+  | 'cannotAttack'
+  | 'unattackable';
 
 export interface LocalizedText {
   en: string;
@@ -66,6 +53,8 @@ export interface CardFilter {
   levelMax?: number;
   atkMin?: number;
   atkMax?: number;
+  defMin?: number;
+  defMax?: number;
   spellType?: SpellType | SpellType[];
   trapType?: TrapType | TrapType[];
   faceUp?: boolean;
@@ -123,6 +112,7 @@ export type TriggerEvent =
   | 'inflictsBattleDamage'
   | 'ownStandby' // controller's standby phase (card face-up on field)
   | 'ownEndPhase'
+  | 'oppEndPhase'
   | 'oppSummon'; // opponent summons a monster (card face-up on field)
 
 export interface Cost {
@@ -175,6 +165,9 @@ export type OpBody =
   | { op: 'mill'; who: Who; n: number }
   | { op: 'fusionSummon'; from: ('hand' | 'mzone' | 'gy')[]; filter?: CardFilter }
   | { op: 'equip' }
+  | { op: 'takeControl'; sel: Selector; untilEndOfTurn?: boolean }
+  | { op: 'toDeck'; sel: Selector; top?: boolean }
+  | { op: 'ritualSummon'; filter?: CardFilter }
   | { op: 'custom'; run: (g: GameState, ctx: EffectContext) => void };
 
 // Every op can be guarded by a condition evaluated at resolution time.
@@ -238,6 +231,22 @@ export interface CardDef {
   limit?: 0 | 1 | 2 | 3;
   token?: boolean;
   system?: boolean; // internal placeholder (used by bots), never shown
+  // Real Yu-Gi-Oh! cards (data from the YGOPRODeck card database)
+  real?: boolean;
+  passcode?: number;
+  typeLine?: LocalizedText; // e.g. "Spellcaster / Effect"
+  pendulum?: boolean;
+  scale?: number;
+  linkVal?: number;
+  linkMarkers?: string[];
+  // Rules for automatic duels are implemented for this card
+  auto?: boolean;
+  // Copies allowed by the TCG / OCG / Goat-era lists (only present when restricted)
+  bans?: { tcg?: number; ocg?: number; goat?: number };
+  // A Normal Spell/Trap that stays on the field after resolving (e.g. lasting effects)
+  remainsOnField?: boolean;
+  // Holding all of these cards (English names) in hand wins the duel
+  handWinSet?: string[];
   art?: { seed?: number; hue?: number; motif?: string };
 }
 
@@ -269,6 +278,7 @@ export interface CardInstance {
   attackedTurn: number;
   modifiers: Modifier[];
   equippedTo?: string;
+  controlReturnTurn?: number; // control returns to the owner at the end of this turn
   opt: Record<number, number>; // effect index -> turn last used
   revealedTo?: PlayerId[];
 }

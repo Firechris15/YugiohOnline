@@ -1,6 +1,6 @@
 import { getDef } from './db';
 import type { CardDef, CardFilter, Controller, EffectContext, GameState, PlayerId, Query } from './types';
-import { getAtk, getLevel } from './stats';
+import { getAtk, getDefense, getLevel } from './stats';
 
 const asArr = <T>(v: T | T[] | undefined): T[] | undefined => (v === undefined ? undefined : Array.isArray(v) ? v : [v]);
 
@@ -40,6 +40,12 @@ export function matchFilter(g: GameState, uid: string, f: CardFilter, ctx?: Effe
     if (d.kind !== 'monster') return false;
     const atk = onField ? getAtk(g, uid) : (d.atk ?? 0);
     if (atk < f.atkMin) return false;
+  }
+  if (f.defMin !== undefined || f.defMax !== undefined) {
+    if (d.kind !== 'monster') return false;
+    const df = onField ? getDefense(g, uid) : (d.def ?? 0);
+    if (f.defMin !== undefined && df < f.defMin) return false;
+    if (f.defMax !== undefined && df > f.defMax) return false;
   }
   if (f.atkMax !== undefined) {
     if (d.kind !== 'monster') return false;

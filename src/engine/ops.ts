@@ -2,7 +2,7 @@
 // player decision it raises a prompt, stores its progress in `r.step` /
 // `r.scratch` and returns 'pause'. When the answer arrives the same op is
 // executed again and picks up the answer via takeAnswer().
-import { getDef } from './db';
+import { getDef, isExtraDeckCard } from './db';
 import type { CardFilter, EffectContext, FusionMaterial, GameState, Op, PlayerId, Position, ResolvingState, Selector } from './types';
 import {
   ask,
@@ -225,7 +225,8 @@ export function execOp(g: GameState, ctx: EffectContext, op: Op, r: ResolvingSta
           cands = zones.filter((u) => {
             const d = getDef(g.cards[u].defId);
             if (d.kind !== 'monster' || d.token) return false;
-            if (d.frame === 'fusion' && op.from === 'deck') return false;
+            if (isExtraDeckCard(d) && op.from === 'deck') return false;
+            if ((d.frame === 'ritual' || isExtraDeckCard(d)) && op.from === 'hand') return false;
             return !op.filter || matchFilter(g, u, op.filter, ctx);
           });
           if (cands.length === 0) {
@@ -466,6 +467,79 @@ export function execOp(g: GameState, ctx: EffectContext, op: Op, r: ResolvingSta
       if (src && isOnField(src) && t && t.zone === 'mzone' && t.faceUp) {
         src.equippedTo = target;
         emit(g, { type: 'equip', uid: ctx.source, target, player: ctx.player, defId: src.defId });
+      }
+      return 'done';
+    }
+    case 'takeControl': {
+      for (const u of onFieldMonsters(g, resolveSelector(g, ctx, op.sel))) {
+        const c = card(g, u);
+        if (c.controller === ctx.player || freeMonsterZones(g, ctx.player) === 0) continue;
+        moveCard(g, u, 'mzone', { controller: ctx.player, position: c.position, faceUp: c.faceUp, silent: true });
+        c.controlReturnTurn = op.untilEndOfTurn ? g.turn : undefined;
+        emit(g, { type: 'control', uid: u, player: ctx.player, defId: c.defId });
+        log(g, 'log.control', { card: c.defId }, ctx.player);
+      }
+      return 'done';
+    }
+    case 'toDeck': {
+      const owners = new Set<PlayerId>();
+      for (const u of resolveSelector(g, ctx, op.sel)) {
+        const c = g.cards[u];
+        if (!c || c.zone === 'deck' || c.zone === 'void') continue;
+        emit(g, { type: 'bounce', uid: u, player: c.controller, defId: c.defId });
+        moveCard(g, u, 'deck', { reason: 'effect' });
+        if (!op.top) owners.add(c.owner);
+      }
+      for (const p of owners) shuffleDeck(g, p);
+      return 'done';
+    }
+    case 'ritualSummon': {
+      const p = ctx.player;
+      const lvl = (u: string) => getDef(g.cards[u].defId).level ?? 0;
+      const pool = (exclude: string) => [...zoneList(g, p, 'hand'), ...zoneList(g, p, 'mzone')].filter((u) => u !== exclude && getDef(g.cards[u].defId).kind === 'monster');
+      if (r.step === 0) {
+        const cands = zoneList(g, p, 'hand').filter((u) => {
+          const d = getDef(g.cards[u].defId);
+          if (d.frame !== 'ritual' || (op.filter && !matchFilter(g, u, op.filter, ctx))) return false;
+          return pool(u).reduce((s, x) => s + lvl(x), 0) >= (d.level ?? 0);
+        });
+        if (cands.length === 0) return 'done';
+        r.step = 1;
+        ask(g, { player: p, kind: 'selectCards', title: T('Choose a Ritual Monster', 'Wähle ein Ritualmonster'), options: cands, min: 1, max: 1, source: ctx.source, reveal: true });
+        return 'pause';
+      }
+      if (r.step === 1) {
+        const ritual = ((takeAnswer(g) as string[]) ?? [])[0];
+        r.scratch.ritual = ritual;
+        r.step = 2;
+        const options = pool(ritual);
+        ask(g, {
+          player: p,
+          kind: 'selectCards',
+          title: T(`Tribute monsters with total Level ${lvl(ritual)} or more`, `Biete Monster mit insgesamt Stufe ${lvl(ritual)} oder mehr als Tribut an`),
+          options,
+          min: 1,
+          max: options.length,
+          source: ritual,
+        });
+        return 'pause';
+      }
+      const ritual = r.scratch.ritual as string;
+      const picked = (takeAnswer(g) as string[]) ?? [];
+      if (picked.reduce((s, x) => s + lvl(x), 0) < lvl(ritual)) {
+        r.step = 1;
+        g.taskAnswer = [ritual];
+        return execOp(g, ctx, op, r);
+      }
+      for (const u of picked) {
+        emit(g, { type: 'tribute', uid: u, player: p, defId: g.cards[u].defId });
+        moveCard(g, u, 'gy', { reason: 'material' });
+      }
+      if (freeMonsterZones(g, p) > 0) {
+        summonMonster(g, ritual, p, 'special', 'atk');
+        g.window = { type: 'summoned', player: p, cards: [ritual], method: 'special' };
+        r.chosen = [ritual];
+        ctx.chosen = r.chosen;
       }
       return 'done';
     }

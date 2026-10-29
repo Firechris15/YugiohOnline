@@ -466,6 +466,14 @@ function runTask(g: GameState, task: Task): void {
       g.stack.pop();
       for (const c of Object.values(g.cards)) {
         if (c.modifiers.length) c.modifiers = c.modifiers.filter((m) => m.untilTurn === undefined || m.untilTurn > g.turn);
+        // Borrowed monsters go back to their owner.
+        if (c.controlReturnTurn !== undefined && c.controlReturnTurn <= g.turn && c.zone === 'mzone' && c.controller !== c.owner) {
+          c.controlReturnTurn = undefined;
+          if (freeMonsterZones(g, c.owner) > 0) {
+            moveCard(g, c.uid, 'mzone', { controller: c.owner, position: c.position, faceUp: c.faceUp, silent: true });
+            emit(g, { type: 'control', uid: c.uid, player: c.owner, defId: c.defId });
+          } else destroyCards(g, [c.uid], 'effect');
+        }
       }
       g.stack.push({ t: 'startTurn' });
       g.stack.push({ t: 'handLimit' });
@@ -518,6 +526,7 @@ function enterPhase(g: GameState, phase: GameState['phase']): void {
       return;
     case 'end':
       queueFieldTriggers(g, p, 'ownEndPhase');
+      queueFieldTriggers(g, opp(p), 'oppEndPhase');
       g.window = { type: 'phaseEnd', player: p };
       g.stack.push({ t: 'endPhaseCleanup' });
       g.stack.push({ t: 'response', player: opp(p), window: g.window });

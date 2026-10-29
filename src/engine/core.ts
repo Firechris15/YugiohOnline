@@ -1,6 +1,6 @@
 // Low level state manipulation: moving cards, summoning, destroying, LP,
 // drawing, event emission and trigger collection.
-import { getDef } from './db';
+import { getDef, isExtraDeckCard } from './db';
 import type {
   CardDef,
   CardInstance,
@@ -153,13 +153,14 @@ export function moveCard(g: GameState, uid: string, to: Zone, opts: MoveOpts = {
     return;
   }
   // Fusion monsters return to the Extra Deck instead of hand/deck.
-  if ((to === 'hand' || to === 'deck') && d.frame === 'fusion') to = 'extra';
+  if ((to === 'hand' || to === 'deck') && isExtraDeckCard(d)) to = 'extra';
 
   const leavingField = wasOnField && to !== 'mzone' && to !== 'szone' && to !== 'fzone';
   if (leavingField || !wasOnField) {
     c.modifiers = [];
     c.attacks = 0;
     c.equippedTo = undefined;
+    c.controlReturnTurn = undefined;
   }
 
   const controller = to === 'mzone' || to === 'szone' || to === 'fzone' ? (opts.controller ?? c.controller) : c.owner;
@@ -233,12 +234,27 @@ export function moveCard(g: GameState, uid: string, to: Zone, opts: MoveOpts = {
       text: opts.reason,
     });
   }
+  if (to === 'hand' && d.real) checkHandWin(g, c.owner);
   if (to === 'gy') {
     queueSelfTriggers(g, uid, 'sentToGY');
     if (wasOnField) queueSelfTriggers(g, uid, 'sentToGYFromField');
     if (opts.reason === 'material') queueSelfTriggers(g, uid, 'sentToGYAsMaterial');
   }
   if (leavingField) cleanupEquips(g);
+}
+
+/** "Win when all pieces are in your hand" cards (e.g. the five Forbidden One pieces). */
+export function checkHandWin(g: GameState, p: PlayerId): void {
+  if (g.winner !== null) return;
+  const hand = g.players[p].hand.map((u) => getDef(g.cards[u].defId));
+  for (const d of hand) {
+    if (!d.handWinSet) continue;
+    const names = new Set(hand.map((x) => x.name.en));
+    if (d.handWinSet.every((n) => names.has(n))) {
+      setWinner(g, p, 'exodia');
+      return;
+    }
+  }
 }
 
 /** Equip spells whose equipped monster left the field are destroyed. */

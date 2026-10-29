@@ -1,7 +1,7 @@
 // Starter decks, deck validation, deck codes and archetype detection.
 import './cards';
 import { getDef, hasDef, isExtraDeckCard } from './db';
-import type { DeckList } from './types';
+import type { CardDef, DeckList } from './types';
 
 type Counts = Record<string, number>;
 
@@ -137,7 +137,21 @@ export interface DeckIssue {
   params?: Record<string, string | number>;
 }
 
-export function validateDeck(deck: DeckList): DeckIssue[] {
+/**
+ * Deck formats:
+ * - demo:  DuelForge demo cards
+ * - auto:  real cards with automated rules (bots, automatic duels), Goat-era banlist
+ * - tcg / ocg: free duels with every real card and the current TCG / OCG banlist
+ */
+export type DeckFormat = 'demo' | 'auto' | 'tcg' | 'ocg';
+
+export function cardLimit(d: CardDef, format: DeckFormat): number {
+  if (!d.real) return d.limit ?? DECK_RULES.copies;
+  const list = format === 'auto' ? d.bans?.goat : format === 'ocg' ? d.bans?.ocg : format === 'tcg' ? d.bans?.tcg : undefined;
+  return list ?? DECK_RULES.copies;
+}
+
+export function validateDeck(deck: DeckList, format: DeckFormat = 'demo'): DeckIssue[] {
   const issues: DeckIssue[] = [];
   if (deck.main.length < DECK_RULES.mainMin) issues.push({ key: 'deck.tooSmall', params: { n: deck.main.length, min: DECK_RULES.mainMin } });
   if (deck.main.length > DECK_RULES.mainMax) issues.push({ key: 'deck.tooLarge', params: { n: deck.main.length, max: DECK_RULES.mainMax } });
@@ -163,14 +177,29 @@ export function validateDeck(deck: DeckList): DeckIssue[] {
     }
   }
   for (const [id, n] of Object.entries(counts)) {
-    const limit = getDef(id).limit ?? DECK_RULES.copies;
-    if (n > limit) issues.push({ key: 'deck.tooManyCopies', params: { id, n, limit } });
+    const limit = cardLimit(getDef(id), format);
+    if (n > limit) issues.push({ key: limit === 0 ? 'deck.banned' : 'deck.tooManyCopies', params: { id, n, limit } });
+  }
+  const real = format !== 'demo';
+  for (const id of Object.keys(counts)) {
+    const d = getDef(id);
+    if (!!d.real !== real) {
+      issues.push({ key: 'deck.wrongCardPool', params: { id } });
+      break;
+    }
+    if (format === 'auto' && !d.auto) issues.push({ key: 'deck.notAuto', params: { id } });
   }
   return issues;
 }
 
-export function isDeckLegal(deck: DeckList): boolean {
-  return validateDeck(deck).length === 0;
+export function isDeckLegal(deck: DeckList, format: DeckFormat = 'demo'): boolean {
+  return validateDeck(deck, format).length === 0;
+}
+
+/** Card pool a deck belongs to: real cards or DuelForge demo cards. */
+export function deckPool(deck: DeckList): 'real' | 'demo' {
+  const first = [...deck.main, ...deck.extra].find((id) => hasDef(id));
+  return first && getDef(first).real ? 'real' : first || deck.main.length ? 'demo' : 'real';
 }
 
 // ----------------------------------------------------------------- deck codes

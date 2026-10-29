@@ -1,5 +1,5 @@
 // Enumerates the legal actions of a player (used by the UI and by bots).
-import { getDef } from './db';
+import { getDef, isSummonRestricted } from './db';
 import type { Action, ActionOption, GameState, PlayerId, Requirement } from './types';
 import { fieldMonsters, freeMonsterZones, freeSpellZones } from './core';
 import { checkActivation, checkSpecialProc, type ActivationInfo, type ActivationMode } from './activation';
@@ -61,7 +61,7 @@ export function getOptions(g: GameState, player: PlayerId): ActionOption[] {
       const c = g.cards[uid];
       const d = getDef(c.defId);
       if (d.kind === 'monster') {
-        if (d.frame !== 'fusion' && !d.token && !ps.normalSummonUsed) {
+        if (!isSummonRestricted(d) && !ps.normalSummonUsed) {
           const lvl = d.level ?? 0;
           const need = lvl >= 7 ? 2 : lvl >= 5 ? 1 : 0;
           const canPlace = need > 0 ? monsters.length >= need : freeMonsterZones(g, player) > 0;
@@ -103,7 +103,10 @@ export function getOptions(g: GameState, player: PlayerId): ActionOption[] {
       if (!c.faceUp || c.position !== 'atk') continue;
       if (c.attacks >= maxAttacks(g, uid)) continue;
       if (hasAbility(g, uid, 'cannotAttack')) continue;
-      for (const t of oppMonsters) out.push({ action: { type: 'attack', uid, target: t }, label: 'action.attack', uid, requirements: [] });
+      for (const t of oppMonsters) {
+        if (g.cards[t].faceUp && hasAbility(g, t, 'unattackable')) continue;
+        out.push({ action: { type: 'attack', uid, target: t }, label: 'action.attack', uid, requirements: [] });
+      }
       if (oppMonsters.length === 0 || hasAbility(g, uid, 'directAttack')) {
         out.push({ action: { type: 'attack', uid, target: null }, label: 'action.directAttack', uid, requirements: [] });
       }

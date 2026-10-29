@@ -26,6 +26,24 @@ export function allCards(includeTokens = false): CardDef[] {
   return ORDER.map((id) => REGISTRY[id]).filter((d) => !d.system && (includeTokens || !d.token));
 }
 
+const EXTRA_FRAMES = new Set(['fusion', 'synchro', 'xyz', 'link']);
+
 export function isExtraDeckCard(d: CardDef): boolean {
-  return d.kind === 'monster' && d.frame === 'fusion';
+  return d.kind === 'monster' && !!d.frame && EXTRA_FRAMES.has(d.frame);
+}
+
+/** Monsters that can never be Normal Summoned or Set (Extra Deck, Ritual, tokens). */
+export function isSummonRestricted(d: CardDef): boolean {
+  return isExtraDeckCard(d) || d.frame === 'ritual' || !!d.token;
+}
+
+/** Remove registered cards (used when real card data is reloaded). */
+export function unregisterWhere(pred: (d: CardDef) => boolean): void {
+  for (let i = ORDER.length - 1; i >= 0; i--) {
+    const d = REGISTRY[ORDER[i]];
+    if (pred(d)) {
+      delete REGISTRY[ORDER[i]];
+      ORDER.splice(i, 1);
+    }
+  }
 }

@@ -31,7 +31,7 @@ export function effectSpeed(d: CardDef, e: EffectDef): number {
 }
 
 export function isPersistent(d: CardDef): boolean {
-  return d.spellType === 'continuous' || d.spellType === 'field' || d.spellType === 'equip' || d.trapType === 'continuous';
+  return !!d.remainsOnField || d.spellType === 'continuous' || d.spellType === 'field' || d.spellType === 'equip' || d.trapType === 'continuous';
 }
 
 export function windowMatches(g: GameState, windows: WindowType[]): boolean {
